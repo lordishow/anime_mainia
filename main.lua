@@ -59,7 +59,7 @@ this_player.Player.CharacterAdded:Connect(function(new_character)
 end)
 
 -- // GENERAL VARIABLES // GENERAL STORE //
-local Keep_On_Teleport = true
+local Keep_On_Teleport = false
 
 --|| MOVEMENT LOGIC VARIABLES // -- // LOGIC MOVEMENT VARIABLES //
 local Custom_Movement = {
@@ -106,7 +106,7 @@ local General_Tab = Window:CreateTab('General', 4483362458) -- Title, Image
 
 local Keep_After_Teleport_Toggle = General_Tab:CreateToggle({
     Name = 'Keep after teleport',
-    CurrentValue = true,
+    CurrentValue = false,
     Flag = 'keep after tp',
     Callback = function(Value)
        Keep_On_Teleport = Value
