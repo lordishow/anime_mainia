@@ -1,24 +1,10 @@
 -- bypass made by me
-print("update")
-print("update")
-print("update")
-print("update")
-print("update")
-print("update")
-print("update")
-print("update")
-print("update")
-print("update")
-print("update")
-print("update")
-print("update")
-
 loadstring(
     game:HttpGet(
         'https://raw.githubusercontent.com/lordishow/anime_mainia_bypass/refs/heads/main/bypass.lua'
     )
 )()
-
+print("update")
 getgenv().Anime_Mainia_Rayfield = nil
 local RNR_ENVIRONMENT = getgenv().Anime_Mainia_Rayfield
 if not RNR_ENVIRONMENT then
@@ -155,7 +141,7 @@ local CustomSpeed_Keybind = Movement_Tab:CreateKeybind({
     Name = 'Custom Speed Keybind',
     CurrentKeybind = 'T',
     HoldToInteract = false,
-    Flag = 'custom_speed_bind', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Flag = 'Custom_sPEED_Ke_bind', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
     Callback = function()
         Custom_Speed_Toggle:Set(not Custom_Movement.toggled)
     end,
