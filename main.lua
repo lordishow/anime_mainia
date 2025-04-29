@@ -1,10 +1,17 @@
+
+if not game:IsLoaded() then
+    repeat
+        task.wait(1)
+    until game:IsLoaded()
+end
+
 -- bypass made by me
 loadstring(
     game:HttpGet(
         'https://raw.githubusercontent.com/lordishow/anime_mainia_bypass/refs/heads/main/bypass.lua'
     )
 )()
-print("update")
+
 getgenv().Anime_Mainia_Rayfield = nil
 local RNR_ENVIRONMENT = getgenv().Anime_Mainia_Rayfield
 if not RNR_ENVIRONMENT then
@@ -17,9 +24,9 @@ if not RNR_ENVIRONMENT then
     RNR_ENVIRONMENT = getgenv().Anime_Mainia_Rayfield
 else
     RNR_ENVIRONMENT.RUNTIME._running_ = false
-    print("cooking previous one")
+    print('cooking previous one')
     task.wait(1)
-    print("cooked")
+    print('cooked')
     RNR_ENVIRONMENT.RUNTIME._running_ = true
 end
 local RUNTIME = RNR_ENVIRONMENT.RUNTIME
@@ -29,7 +36,8 @@ local SERVICES = {
     UserInput = game:GetService('UserInputService'),
     Players = game:GetService('Players'),
     CoreGui = game:GetService('CoreGui'),
-    Run = game:GetService("RunService")
+    Run = game:GetService('RunService'),
+    Teleport = game:GetService('TeleportService'),
 }
 
 local this_player = {
@@ -120,7 +128,7 @@ local Movement_Speed_Slider = Movement_Tab:CreateSlider({
     Suffix = 'Radius',
     CurrentValue = 16,
     Flag = 'Movement_Slider', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-    Callback = function(Value) 
+    Callback = function(Value)
         Custom_Movement.walkspeed = Value
     end,
 })
@@ -131,7 +139,7 @@ local Custom_Speed_Toggle = Movement_Tab:CreateToggle({
     Flag = 'custom_speed_togg',
     Callback = function(Value)
         Custom_Movement.toggled = Value
-        if Value == false then 
+        if Value == false then
             this_player.Humanoid.WalkSpeed = 16
         end
     end,
@@ -147,18 +155,26 @@ local CustomSpeed_Keybind = Movement_Tab:CreateKeybind({
     end,
 })
 
-RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(function(__delta__) 
-    if RUNTIME._running_ == false then 
-        this_player.Humanoid.WalkSpeed = 16
-        RUNTIME._running_connection_:Disconnect()
-        Rayfield:Destroy()
-        return
-    end
-
-    task.spawn(function() -- CUSTOM MOVEMENT LOGIC
-        if Custom_Movement.toggled then 
-
-            this_player.Humanoid.WalkSpeed = Custom_Movement.walkspeed
+RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
+    function(__delta__)
+        if RUNTIME._running_ == false then
+            this_player.Humanoid.WalkSpeed = 16
+            RUNTIME._running_connection_:Disconnect()
+            Rayfield:Destroy()
+            return
         end
-    end)    
+
+        task.spawn(function() -- CUSTOM MOVEMENT LOGIC
+            if Custom_Movement.toggled then
+                this_player.Humanoid.WalkSpeed = Custom_Movement.walkspeed
+            end
+        end)
+    end
+)
+
+SERVICES.Teleport.TeleportStarted:Connect(function()
+    queue_on_teleport([[
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/lordishow/anime_mainia_bypass/refs/heads/main/bypass.lua'))()
+    ]])
+    print('Queued script for next teleport')
 end)
