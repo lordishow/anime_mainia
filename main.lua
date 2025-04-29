@@ -177,6 +177,9 @@ local Zero_Vel_Toggle = Movement_Tab:CreateToggle({
     Flag = 'custom_speed_togg',
     Callback = function(Value)
         Zero_Velocity = Value
+        if Value == false then 
+            this_player.HumanoidRootPart.Anchored = false
+        end
     end,
 })
 
@@ -207,6 +210,7 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
 
         task.spawn(function() 
             if Zero_Velocity then 
+                HumanoidRootPart.Anchored = true
                 this_player.HumanoidRootPart.Velocity = Vector3.zero
                  this_player.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
             end
