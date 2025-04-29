@@ -214,7 +214,7 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
     end
 )
 this_player.Player.OnTeleport:Connect(function(State)
-    if State == Enum.TeleportState.Started or State == Enum.TeleportState.InProgress then
+    if (State == Enum.TeleportState.Started or State == Enum.TeleportState.InProgress) and Keep_On_Teleport then
     queue_on_teleport([[
             loadstring(game:HttpGet('https://raw.githubusercontent.com/lordishow/anime_mainia/refs/heads/main/main.lua'))()
     ]])
