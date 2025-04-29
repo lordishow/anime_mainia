@@ -185,7 +185,7 @@ local Zero_Vel_Toggle = Movement_Tab:CreateToggle({
 
 local Zero_Velocity_Keybind = Movement_Tab:CreateKeybind({
     Name = 'Zero Velocity Keybind',
-    CurrentKeybind = 'G',
+    CurrentKeybind = 'F',
     HoldToInteract = false,
     Flag = 'ZerO_vel', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
     Callback = function()
