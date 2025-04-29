@@ -61,6 +61,8 @@ end)
 -- // GENERAL VARIABLES // GENERAL STORE //
 local Keep_On_Teleport = false
 
+local Zero_Velocity = false
+
 --|| MOVEMENT LOGIC VARIABLES // -- // LOGIC MOVEMENT VARIABLES //
 local Custom_Movement = {
     toggled = false,
@@ -135,7 +137,7 @@ local Divider = Movement_Tab:CreateDivider()
 
 local Movement_Speed_Slider = Movement_Tab:CreateSlider({
     Name = 'WalkSpeed',
-    Range = { 16, 300 },
+    Range = { 0, 300 },
     Increment = 1,
     Suffix = 'Radius',
     CurrentValue = 0,
@@ -167,6 +169,26 @@ local CustomSpeed_Keybind = Movement_Tab:CreateKeybind({
     end,
 })
 
+
+local Zero_Vel_Toggle = Movement_Tab:CreateToggle({
+    Name = 'Zero Velocity',
+    CurrentValue = false,
+    Flag = 'custom_speed_togg',
+    Callback = function(Value)
+        Zero_Velocity = Value
+    end,
+})
+
+local Zero_Velocity_Keybind = Movement_Tab:CreateKeybind({
+    Name = 'Custom Speed Keybind',
+    CurrentKeybind = 'G',
+    HoldToInteract = false,
+    Flag = 'ZerO_vel', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Callback = function()
+        Zero_Vel_Toggle:Set(not Zero_Velocity)
+    end,
+})
+
 RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
     function(__delta__)
         if RUNTIME._running_ == false then
@@ -179,6 +201,13 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
         task.spawn(function() -- CUSTOM MOVEMENT LOGIC
             if Custom_Movement.toggled then
                 this_player.Humanoid.WalkSpeed = Custom_Movement.walkspeed
+            end
+        end)
+
+        task.spawn(function() 
+            if Zero_Velocity then 
+                this_player.HumanoidRootPart.Velocity = Vector3.zero
+                 this_player.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
             end
         end)
     end
