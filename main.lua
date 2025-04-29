@@ -4,7 +4,7 @@ loadstring(
         'https://raw.githubusercontent.com/lordishow/anime_mainia_bypass/refs/heads/main/bypass.lua'
     )
 )()
-
+print("update")
 getgenv().Anime_Mainia_Rayfield = nil
 local RNR_ENVIRONMENT = getgenv().Anime_Mainia_Rayfield
 if not RNR_ENVIRONMENT then
