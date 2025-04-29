@@ -1,4 +1,3 @@
-
 if not game:IsLoaded() then
     repeat
         task.wait(1)
@@ -6,6 +5,7 @@ if not game:IsLoaded() then
 end
 
 -- bypass made by me
+
 loadstring(
     game:HttpGet(
         'https://raw.githubusercontent.com/lordishow/anime_mainia_bypass/refs/heads/main/bypass.lua'
@@ -58,6 +58,9 @@ this_player.Player.CharacterAdded:Connect(function(new_character)
     this_player.Ban = new_character:WaitForChild('Ban')
 end)
 
+-- // GENERAL VARIABLES // GENERAL STORE //
+local Keep_On_Teleport = true
+
 --|| MOVEMENT LOGIC VARIABLES // -- // LOGIC MOVEMENT VARIABLES //
 local Custom_Movement = {
     toggled = false,
@@ -100,6 +103,15 @@ local Window = Rayfield:CreateWindow({
 })
 
 local General_Tab = Window:CreateTab('General', 4483362458) -- Title, Image
+
+local Keep_After_Teleport_Toggle = General_Tab:CreateToggle({
+    Name = 'Keep after teleport',
+    CurrentValue = true,
+    Flag = 'keep after tp',
+    Callback = function(Value)
+       Keep_On_Teleport = Value
+    end,
+})
 
 local Kill_Keybind = General_Tab:CreateKeybind({
     Name = 'Kill Logic',
@@ -171,10 +183,10 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
         end)
     end
 )
-
-SERVICES.Teleport.TeleportStarted:Connect(function()
-    queue_on_teleport([[
-        loadstring(game:HttpGet('https://raw.githubusercontent.com/lordishow/anime_mainia_bypass/refs/heads/main/bypass.lua'))()
-    ]])
-    print('Queued script for next teleport')
+this_player.Player.OnTeleport:Connect(function(State)
+    if State == Enum.TeleportState.Started and Keep_On_Teleport then
+        queue_on_teleport([[
+            loadstring(game:HttpGet('https://raw.githubusercontent.com/lordishow/anime_mainia/refs/heads/main/main.lua'))()
+        ]])
+    end
 end)
