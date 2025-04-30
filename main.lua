@@ -289,10 +289,6 @@ local Auto_Farm_Enabled_Toggle = AutoFarm_Tab:CreateToggle({
     CurrentValue = false,
     Flag = 'Auto_Farm_Togg',
     Callback = function(Value)
-        if Value == false then 
-            Char_Presets["NOJO"][2].Elapsed_time_since_new_part = 10
-        end
-
        Auto_Farm_Vars.Enabled = Value
     end,
 })
@@ -313,10 +309,26 @@ local Dropdown = AutoFarm_Tab:CreateDropdown({
 local Visual_Effect_Child_Added_Functions = {
     ["NOJO"] = function(adopted) 
         if adopted.Name == "LapseBlue" then
-            local GOJO = Char_Presets[Auto_Farm_Vars.Preset] 
+            local GOJO = Char_Presets["NOJO"] 
             GOJO[2].Lapse_Blue_Spinning_Part = adopted
             GOJO[2].Elapsed_time_since_new_part = os.clock()
         end
+    end
+}
+
+local Status_Child_Added_Functions = {
+    ["NOJO"] = function(kid)
+        local GOJO = Char_Presets["NOJO"] 
+        if kid.Name == "GojoChant" then
+            kid.Changed:Connect(function()
+                print("asdadasd") 
+                GOJO[4].Available_Evolved_Move = kid.Value
+            end)
+            kid.Destroying:Connect(function()
+                print("henlo") 
+                GOJO[4].Available_Evolved_Move = 0
+            end)
+        end 
     end
 }
 
@@ -324,6 +336,13 @@ GLOBALS.FX.ChildAdded:Connect(function(adopted)
     local VECAF_Func = Visual_Effect_Child_Added_Functions[Auto_Farm_Vars.Preset]
     if VECAF_Func then 
         VECAF_Func(adopted)
+    end
+end)
+
+GLOBALS.STATUS.ChildAdded:Connect(function(kid) 
+    local SCAF_Func = Status_Child_Added_Functions[Auto_Farm_Vars.Preset]
+    if SCAF_Func then 
+        SCAF_Func(kid)
     end
 end)
 
@@ -340,54 +359,44 @@ local Auto_Farm_Runtime = {
         local Player_Is_Stunned = GLOBALS.STATUS:FindFirstChild("Stunned") and true or false
 
         if not Chanting_On_CD then
-            if GLOBALS.PLAYER_JUST_DIED then 
+            if GLOBALS.PLAYER_JUST_DIED then
+                print("shangadaa") 
                 GOJO[4].Available_Evolved_Move = 0
                 GOJO[4].Wait_For_Next = false
             else
                 if ((os.clock() - Last_Time_Input_Was_Fired) > 0.1) then
-                        if GOJO[4].Wait_For_Next == false and not Player_Is_Stunned then 
-                            local args = {
-                                [1] = {
-                                    [1] = "Skill",
-                                    [2] = "4"
-                                }
+                    if (GOJO[4].Wait_For_Next == false and not Player_Is_Stunned) and GOJO[4].Available_Evolved_Move ~= 3 then 
+                        local args = {
+                            [1] = {
+                                [1] = "Skill",
+                                [2] = "4"
                             }
-                            GOJO[4].Wait_For_Next = true
-                            GOJO[4].Last_Time_Chanted = os.clock()
-                            GOJO[4].Available_Evolved_Move += 1
-                            print(GOJO[4].Available_Evolved_Move)
-                            Last_Time_Input_Was_Fired = os.clock()
-                            
-                            GLOBALS.INPUT:FireServer(unpack(args))
-                            
-                            if GOJO[4].Available_Evolved_Move == 4 then 
-                                task.delay(8, function() 
-                                    if not GLOBALS.PLAYER_JUST_DIED then 
-                                        print('reset')
-                                        GOJO[4].Wait_For_Next = false
-                                        GOJO[4].Available_Evolved_Move = 0
-                                    end
-                                end)
-                            else
-                                Chanting_On_CD = this_player.Cooldowns:WaitForChild("Chanting", 10)
-                                task.spawn(function() 
-                                    if Chanting_On_CD then 
-                                        repeat 
-                                            task.wait(0.2)
-                                        until this_player.Cooldowns:FindFirstChild("Chanting") == nil or GLOBALS.PLAYER_JUST_DIED
-                                        GOJO[4].Wait_For_Next = false
-                                    end
-                                end)
-                            end
+                        }
+                        local Previous_Chant_Value = GOJO[4].Available_Evolved_Move
+                        Last_Time_Input_Was_Fired = os.clock()
+                        GLOBALS.INPUT:FireServer(unpack(args))
+                        print("4")
+                        print(GOJO[4].Available_Evolved_Move)
+                        GOJO[4].Wait_For_Next = true
+                        Chanting_On_CD = this_player.Cooldowns:WaitForChild("Chanting", 2)
+                        if Chanting_On_CD then 
+                            task.spawn(function() 
+                                repeat task.wait(0.2) until this_player.Cooldowns:FindFirstChild("Chanting", 2) == nil or GLOBALS.PLAYER_JUST_DIED
+                                GOJO[4].Wait_For_Next = false
+                            end)
+                        else
+                            GOJO[4].Wait_For_Next = false
                         end
+                    end
                 end
             end 
         end
 
         if not Lapse_Blue_On_CD then 
-            if not GLOBALS.PLAYER_JUST_DIED then 
+            if not GLOBALS.PLAYER_JUST_DIED then
+                print(GOJO[4].Available_Evolved_Move) 
                 if ((os.clock() - Last_Time_Input_Was_Fired) > 0.1) and GOJO[4].Available_Evolved_Move >= 2 then
-                    if not GOJO[2].Wait_For_Next and not Player_Is_Stunned then 
+                    if (not GOJO[2].Wait_For_Next and not Player_Is_Stunned) then 
                     
                         local args = {
                             [1] = {
@@ -399,6 +408,11 @@ local Auto_Farm_Runtime = {
                         Last_Time_Input_Was_Fired = os.clock()
                         GLOBALS.INPUT:FireServer(unpack(args))
                         print("FIRED")
+
+                        GOJO[4].Wait_For_Next = false
+                        print("zero")
+                        GOJO[4].Available_Evolved_Move = 0
+
                         Lapse_Blue_On_CD = this_player.Cooldowns:WaitForChild("Lapse Blue", 5)
                         if Lapse_Blue_On_CD then 
                             print("waiting")
