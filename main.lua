@@ -323,15 +323,6 @@ local Starting_Delay_Slider = AutoFarm_Tab:CreateSlider({
     end,
 })
 
-local Auto_Farm_Enabled_Toggle = AutoFarm_Tab:CreateToggle({
-    Name = 'Auto Farm',
-    CurrentValue = false,
-    Flag = 'Auto_Farm_Togg',
-    Callback = function(Value)
-       Auto_Farm_Vars.Enabled = Value
-    end,
-})
-
 local Zero_Velocity_Keybind = AutoFarm_Tab:CreateKeybind({
     Name = 'Auto Farm Keybind',
     CurrentKeybind = 'G',
