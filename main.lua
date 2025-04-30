@@ -319,9 +319,7 @@ local Starting_Delay_Slider = AutoFarm_Tab:CreateSlider({
     CurrentValue = 0,
     Flag = 'Radius_Slider', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
     Callback = function(Value)
-        print(Char_Presets["NOJO"][2].Attack_Delay)
         Char_Presets["NOJO"][2].Attack_Delay = Value
-        print(Char_Presets["NOJO"][2].Attack_Delay)
     end,
 })
 
@@ -417,10 +415,6 @@ local Auto_Farm_Runtime = {
             if not GLOBALS.PLAYER_JUST_DIED then
                 if ((os.clock() - Last_Time_Input_Was_Fired) > 0.1) and GOJO[4].Available_Evolved_Move >= 2 then
                     if (not GOJO[2].Wait_For_Next and not Player_Is_Stunned) and (os.clock() - GOJO[2].Last_Attack_Delay_Time) > GOJO[2].Attack_Delay then 
-                        print("sus")
-                        print(GOJO[2].Attack_Delay)
-                        print((os.clock() - GOJO[2].Last_Attack_Delay_Time))
-
                         local args = {
                             [1] = {
                                 [1] = "Skill",
@@ -430,10 +424,8 @@ local Auto_Farm_Runtime = {
                         GOJO[2].Wait_For_Next = true
                         Last_Time_Input_Was_Fired = os.clock()
                         GLOBALS.INPUT:FireServer(unpack(args))
-                        print("FIRED")
 
                         GOJO[4].Wait_For_Next = false
-                        print("zero")
                         GOJO[4].Available_Evolved_Move = 0
 
                         Lapse_Blue_On_CD = this_player.Cooldowns:WaitForChild("Lapse Blue", 5)
@@ -452,7 +444,6 @@ local Auto_Farm_Runtime = {
                     end 
                 end
             else
-                print("aga")
                 GOJO[2].Last_Attack_Delay_Time = os.clock()
                 GOJO[2].Wait_For_Next = false
             end
