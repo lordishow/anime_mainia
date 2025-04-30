@@ -44,6 +44,9 @@ local GLOBALS = {
     FX = workspace.FX,
     LIVING = workspace.Living,
     TARGET = nil,
+    INPUT = SERVICES.Replicated.Remotes.Input,
+    STATUS = SERVICES.Players.LocalPlayer.Status,
+    PLAYER_JUST_DIED = false,
 }
 
 local this_player = {
@@ -52,6 +55,7 @@ local this_player = {
     HumanoidRootPart = SERVICES.Players.LocalPlayer.Character.HumanoidRootPart,
     Humanoid = SERVICES.Players.LocalPlayer.Character.Humanoid,
     Mouse = SERVICES.Players.LocalPlayer:GetMouse(),
+    Cooldowns = SERVICES.Players.LocalPlayer.Cooldowns,
     Ban = SERVICES.Players.LocalPlayer.Character.Ban,
 }
 
@@ -62,6 +66,10 @@ this_player.Player.CharacterAdded:Connect(function(new_character)
     )
     this_player.Humanoid = new_character:WaitForChild('Humanoid')
     this_player.Ban = new_character:WaitForChild('Ban')
+    GLOBALS.PLAYER_JUST_DIED = true
+    task.delay(3, function() 
+        GLOBALS.PLAYER_JUST_DIED = false
+    end)
 end)
 -- // PRESETS // -- // PRESENTS //
 
@@ -70,12 +78,16 @@ local Char_Presets = {
     ["NOJO"] = {
         [1] = nil,
         [2] = {
+            Wait_For_Next = false,
             Lapse_Blue_Spinning_Part = nil,
-            Elapsed_time_since_new_part = 0
+            Elapsed_time_since_new_part = 0,
+            Elapsed_time_since_last_remote_fired = 0
         },
         [3] = nil,
         [4] = {
+            Wait_For_Next = false,
             Available_Evolved_Move = 0,
+            Last_Time_Chanted = 0,
         }
     }
 }
@@ -101,6 +113,10 @@ local Auto_Farm_Vars = {
 -- // FINDING TARGET VARIABLES // TARGET SPY //
 
 local Black_List = {}
+
+-- // INPUT REMOTE // INPUT REMOTE //
+
+local Last_Time_Input_Was_Fired = 0
 
 -- // UTILITARIAN FUNCTIONALITIES
 
@@ -317,16 +333,108 @@ local Auto_Farm_Runtime = {
         if GLOBALS.TARGET == nil then 
             return
         end
-        if not (GOJO[2].Lapse_Blue_Spinning_Part and GOJO[2].Lapse_Blue_Spinning_Part:IsDescendantOf(GLOBALS.FX)) then 
-            return
-        end
-        if (os.clock() - GOJO[2].Elapsed_time_since_new_part) > 3 then 
-            return
+        this_player.HumanoidRootPart.CFrame = GLOBALS.TARGET.HumanoidRootPart.CFrame * CFrame.new(0,0,35)
+        local Lapse_Blue_On_CD = this_player.Cooldowns:FindFirstChild("Lapse Blue") and true or false
+        local Chanting_On_CD = this_player.Cooldowns:FindFirstChild("Chanting") and true or false
+        
+        local Player_Is_Stunned = GLOBALS.STATUS:FindFirstChild("Stunned") and true or false
+
+        if not Chanting_On_CD then
+            if GLOBALS.PLAYER_JUST_DIED then 
+                GOJO[4].Available_Evolved_Move = 0
+                GOJO[4].Wait_For_Next = false
+            else
+                if ((os.clock() - Last_Time_Input_Was_Fired) > 0.1) then
+                        if GOJO[4].Wait_For_Next == false and not Player_Is_Stunned then 
+                            local args = {
+                                [1] = {
+                                    [1] = "Skill",
+                                    [2] = "4"
+                                }
+                            }
+                            GOJO[4].Wait_For_Next = true
+                            GOJO[4].Last_Time_Chanted = os.clock()
+                            GOJO[4].Available_Evolved_Move += 1
+                            print(GOJO[4].Available_Evolved_Move)
+                            Last_Time_Input_Was_Fired = os.clock()
+                            
+                            GLOBALS.INPUT:FireServer(unpack(args))
+                            
+                            if GOJO[4].Available_Evolved_Move == 4 then 
+                                task.delay(8, function() 
+                                    if not GLOBALS.PLAYER_JUST_DIED then 
+                                        print('reset')
+                                        GOJO[4].Wait_For_Next = false
+                                        GOJO[4].Available_Evolved_Move = 0
+                                    end
+                                end)
+                            else
+                                Chanting_On_CD = this_player.Cooldowns:WaitForChild("Chanting", 10)
+                                task.spawn(function() 
+                                    if Chanting_On_CD then 
+                                        repeat 
+                                            task.wait(0.2)
+                                        until this_player.Cooldowns:FindFirstChild("Chanting") == nil or GLOBALS.PLAYER_JUST_DIED
+                                        GOJO[4].Wait_For_Next = false
+                                    end
+                                end)
+                            end
+                        end
+                end
+            end 
         end
 
+        if not Lapse_Blue_On_CD then 
+            if not GLOBALS.PLAYER_JUST_DIED then 
+                if ((os.clock() - Last_Time_Input_Was_Fired) > 0.1) and GOJO[4].Available_Evolved_Move >= 2 then
+                    if not GOJO[2].Wait_For_Next and not Player_Is_Stunned then 
+                    
+                        local args = {
+                            [1] = {
+                                [1] = "Skill",
+                                [2] = "2"
+                            }
+                        }
+                        GOJO[2].Wait_For_Next = true
+                        Last_Time_Input_Was_Fired = os.clock()
+                        GLOBALS.INPUT:FireServer(unpack(args))
+                        print("FIRED")
+                        Lapse_Blue_On_CD = this_player.Cooldowns:WaitForChild("Lapse Blue", 5)
+                        if Lapse_Blue_On_CD then 
+                            print("waiting")
+                            repeat 
+                                task.wait(0.2)
+                            until (this_player.Cooldowns:FindFirstChild("Lapse Blue") == nil) or GLOBALS.PLAYER_JUST_DIED
+                            print('dont_wait_no_moore')
+                            GOJO[2].Wait_For_Next = false
+                        else
+                            GOJO[2].Wait_For_Next = false
+                        end
+                    end 
+                end
+            else
+                GOJO[2].Wait_For_Next = false
+            end
+        else
+            if (GOJO[2].Lapse_Blue_Spinning_Part and GOJO[2].Lapse_Blue_Spinning_Part:IsDescendantOf(GLOBALS.FX)) then 
+                if (os.clock() - GOJO[2].Elapsed_time_since_new_part) < 3 then 
+                    local Position_REMOTE = GLOBALS.FX:FindFirstChild("RemoteEvent")
+                    if Position_REMOTE then
+                        if (os.clock() - GOJO[2].Elapsed_time_since_last_remote_fired) > 0.1 then 
+                            GOJO[2].Elapsed_time_since_last_remote_fired = os.clock()
+                            Position_REMOTE:FireServer(GLOBALS.TARGET.HumanoidRootPart.CFrame)
+                        end 
+                    end
+                end
+            end
+        end
+        
+        
+        --[[
         local offset = GOJO[2].Lapse_Blue_Spinning_Part.Position - this_player.HumanoidRootPart.Position
         local desiredHRPPosition = GLOBALS.TARGET.HumanoidRootPart.Position - offset
         this_player.HumanoidRootPart.CFrame = CFrame.new(desiredHRPPosition)
+        ]]
     end,
 }
 
