@@ -319,7 +319,9 @@ local Starting_Delay_Slider = AutoFarm_Tab:CreateSlider({
     CurrentValue = 0,
     Flag = 'Radius_Slider', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
     Callback = function(Value)
-        Char_Presets["NOJO"].Attack_Delay = Value
+        print(Char_Presets["NOJO"][2].Attack_Delay)
+        Char_Presets["NOJO"][2].Attack_Delay = Value
+        print(Char_Presets["NOJO"][2].Attack_Delay)
     end,
 })
 
