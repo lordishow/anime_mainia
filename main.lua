@@ -304,6 +304,16 @@ local Dropdown = AutoFarm_Tab:CreateDropdown({
    end,
 })
 
+
+local Zero_Velocity_Keybind = AutoFarm_Tab:CreateKeybind({
+    Name = 'Auto Farm Keybind',
+    CurrentKeybind = 'G',
+    HoldToInteract = false,
+    Flag = 'af_key_vel', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Callback = function()
+        Auto_Farm_Enabled_Toggle:Set(not Auto_Farm_Vars.Enabled)
+    end,
+})
 -- // GOJO'S CHILD ADDED //
 
 local Visual_Effect_Child_Added_Functions = {
