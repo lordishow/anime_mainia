@@ -385,6 +385,7 @@ local Auto_Farm_Runtime = {
             else
                 if Can_Fire_Remote then
                     if (GOJO[4].Wait_For_Next == false and not Player_Is_Stunned) and GOJO[4].Available_Evolved_Move ~= 3 then 
+                        GOJO.Offset_CFrame = CFrame.new(0,50,0)
                         local args = {
                             [1] = {
                                 [1] = "Skill",
@@ -466,6 +467,7 @@ local Auto_Farm_Runtime = {
         if not Reversal_Red_On_CD and Lapse_Blue_On_CD and Auto_Farm_Vars.Enabled then 
             if GLOBALS.PLAYER_JUST_DIED then 
                 if Can_Fire_Remote and not GOJO[1].Wait_For_Next then 
+                    GOJO.Offset_CFrame = CFrame.new(0,0,-40)
                     local args = {
                         [1] = {
                             [1] = "Skill",
@@ -494,8 +496,10 @@ local Auto_Farm_Runtime = {
         end
         
         if Active_Target then 
-            local LookAtCFrame = CFrame.new(this_player.Humanoid.Position, GLOBALS.TARGET.HumanoidRootPart.Position)
-            this_player.HumanoidRootPart.CFrame = CFrame.new(GLOBALS.TARGET.HumanoidRootPart.Position) * LookAtCFrame
+            local LookAtCFrame = CFrame.new(this_player.HumanoidRootPart.Position, GLOBALS.TARGET.HumanoidRootPart.Position)
+            this_player.HumanoidRootPart.CFrame = LookAtCFrame
+            this_player.HumanoidRootPart.CFrame = CFrame.new((GLOBALS.TARGET.HumanoidRootPart.CFrame * GOJO.Offset_CFrame).Position)
+            this_player.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0,0,0)
         end
 
         --[[
