@@ -75,10 +75,13 @@ end)
 -- // PRESETS // -- // PRESENTS //
 
 -- \\ NOJO \\ GOJO // 
+
 local Char_Presets = {
     ["NOJO"] = {
         [1] = nil,
         [2] = {
+            Last_Attack_Delay_Time = 0,
+            Attack_Delay = 0,
             Wait_For_Next = false,
             Lapse_Blue_Spinning_Part = nil,
             Elapsed_time_since_new_part = 0,
@@ -305,6 +308,29 @@ local Dropdown = AutoFarm_Tab:CreateDropdown({
    end,
 })
 
+local Divider = AutoFarm_Tab:CreateDivider()
+local Section = AutoFarm_Tab:CreateSection('NOJO')
+
+local Starting_Delay_Slider = AutoFarm_Tab:CreateSlider({
+    Name = 'Lapse Blue Starting Delay',
+    Range = { 0, 10 },
+    Increment = 1,
+    Suffix = 'Radius',
+    CurrentValue = 0,
+    Flag = 'Radius_Slider', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Callback = function(Value)
+        Char_Presets["NOJO"].Attack_Delay = Value
+    end,
+})
+
+local Auto_Farm_Enabled_Toggle = AutoFarm_Tab:CreateToggle({
+    Name = 'Auto Farm',
+    CurrentValue = false,
+    Flag = 'Auto_Farm_Togg',
+    Callback = function(Value)
+       Auto_Farm_Vars.Enabled = Value
+    end,
+})
 
 local Zero_Velocity_Keybind = AutoFarm_Tab:CreateKeybind({
     Name = 'Auto Farm Keybind',
@@ -397,8 +423,11 @@ local Auto_Farm_Runtime = {
         if not Lapse_Blue_On_CD then
             if not GLOBALS.PLAYER_JUST_DIED then
                 if ((os.clock() - Last_Time_Input_Was_Fired) > 0.1) and GOJO[4].Available_Evolved_Move >= 2 then
-                    if (not GOJO[2].Wait_For_Next and not Player_Is_Stunned) then 
-                    
+                    if (not GOJO[2].Wait_For_Next and not Player_Is_Stunned) and (os.clock() - GOJO[2].Last_Attack_Delay_Time) > GOJO[2].Attack_Delay then 
+                        print("sus")
+                        print(GOJO[2].Attack_Delay)
+                        print((os.clock() - GOJO[2].Last_Attack_Delay_Time))
+
                         local args = {
                             [1] = {
                                 [1] = "Skill",
@@ -430,6 +459,8 @@ local Auto_Farm_Runtime = {
                     end 
                 end
             else
+                print("aga")
+                GOJO[2].Last_Attack_Delay_Time = os.clock()
                 GOJO[2].Wait_For_Next = false
             end
         else
