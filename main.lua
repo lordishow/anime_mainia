@@ -67,7 +67,8 @@ this_player.Player.CharacterAdded:Connect(function(new_character)
     this_player.Humanoid = new_character:WaitForChild('Humanoid')
     this_player.Ban = new_character:WaitForChild('Ban')
     GLOBALS.PLAYER_JUST_DIED = true
-    task.delay(3, function() 
+    GLOBALS.STATUS = SERVICES.Players.LocalPlayer.Status
+    task.delay(1.5, function() 
         GLOBALS.PLAYER_JUST_DIED = false
     end)
 end)
@@ -326,22 +327,6 @@ local Visual_Effect_Child_Added_Functions = {
     end
 }
 
-local Status_Child_Added_Functions = {
-    ["NOJO"] = function(kid)
-        local GOJO = Char_Presets["NOJO"] 
-        if kid.Name == "GojoChant" then
-            kid.Changed:Connect(function()
-                print("asdadasd") 
-                GOJO[4].Available_Evolved_Move = kid.Value
-            end)
-            kid.Destroying:Connect(function()
-                print("henlo") 
-                GOJO[4].Available_Evolved_Move = 0
-            end)
-        end 
-    end
-}
-
 GLOBALS.FX.ChildAdded:Connect(function(adopted) 
     local VECAF_Func = Visual_Effect_Child_Added_Functions[Auto_Farm_Vars.Preset]
     if VECAF_Func then 
@@ -349,20 +334,25 @@ GLOBALS.FX.ChildAdded:Connect(function(adopted)
     end
 end)
 
-GLOBALS.STATUS.ChildAdded:Connect(function(kid) 
-    local SCAF_Func = Status_Child_Added_Functions[Auto_Farm_Vars.Preset]
-    if SCAF_Func then 
-        SCAF_Func(kid)
-    end
-end)
-
 local Auto_Farm_Runtime = {
     ["NOJO"] = function() -- GOJO // NOJO // GOJO
         local GOJO = Char_Presets["NOJO"]
+        local Active_Target = true
         if GLOBALS.TARGET == nil then 
-            return
+            Active_Target = false
         end
-        this_player.HumanoidRootPart.CFrame = GLOBALS.TARGET.HumanoidRootPart.CFrame * CFrame.new(0,0,35)
+        local Gojo_Chant_Status = GLOBALS.STATUS:FindFirstChild("GojoChant")
+
+        if Gojo_Chant_Status then
+            print(Gojo_Chant_Status.Value)
+            GOJO[4].Available_Evolved_Move = Gojo_Chant_Status.Value
+        else
+            GOJO[4].Available_Evolved_Move = 0
+        end 
+        if Active_Target then 
+            this_player.HumanoidRootPart.CFrame = GLOBALS.TARGET.HumanoidRootPart.CFrame * CFrame.new(0,0,35)    
+        end
+
         local Lapse_Blue_On_CD = this_player.Cooldowns:FindFirstChild("Lapse Blue") and true or false
         local Chanting_On_CD = this_player.Cooldowns:FindFirstChild("Chanting") and true or false
         
@@ -370,9 +360,9 @@ local Auto_Farm_Runtime = {
 
         if not Chanting_On_CD then
             if GLOBALS.PLAYER_JUST_DIED then
-                print("shangadaa") 
                 GOJO[4].Available_Evolved_Move = 0
                 GOJO[4].Wait_For_Next = false
+                GOJO[2].Wait_For_Next = false
             else
                 if ((os.clock() - Last_Time_Input_Was_Fired) > 0.1) then
                     if (GOJO[4].Wait_For_Next == false and not Player_Is_Stunned) and GOJO[4].Available_Evolved_Move ~= 3 then 
@@ -385,13 +375,15 @@ local Auto_Farm_Runtime = {
                         local Previous_Chant_Value = GOJO[4].Available_Evolved_Move
                         Last_Time_Input_Was_Fired = os.clock()
                         GLOBALS.INPUT:FireServer(unpack(args))
-                        print("4")
-                        print(GOJO[4].Available_Evolved_Move)
                         GOJO[4].Wait_For_Next = true
                         Chanting_On_CD = this_player.Cooldowns:WaitForChild("Chanting", 2)
-                        if Chanting_On_CD then 
-                            task.spawn(function() 
-                                repeat task.wait(0.2) until this_player.Cooldowns:FindFirstChild("Chanting", 2) == nil or GLOBALS.PLAYER_JUST_DIED
+                        if Chanting_On_CD then
+                            if Auto_Farm_Vars.Enabled == false then return end
+
+                            task.spawn(function()
+                                local max_index = 10
+                                local index = 0 
+                                repeat task.wait(0.2) index += 1 until this_player.Cooldowns:FindFirstChild("Chanting", 2) == nil or GLOBALS.PLAYER_JUST_DIED or not Auto_Farm_Vars.Enabled or index >= max_index
                                 GOJO[4].Wait_For_Next = false
                             end)
                         else
@@ -402,9 +394,8 @@ local Auto_Farm_Runtime = {
             end 
         end
 
-        if not Lapse_Blue_On_CD then 
+        if not Lapse_Blue_On_CD then
             if not GLOBALS.PLAYER_JUST_DIED then
-                print(GOJO[4].Available_Evolved_Move) 
                 if ((os.clock() - Last_Time_Input_Was_Fired) > 0.1) and GOJO[4].Available_Evolved_Move >= 2 then
                     if (not GOJO[2].Wait_For_Next and not Player_Is_Stunned) then 
                     
@@ -425,11 +416,13 @@ local Auto_Farm_Runtime = {
 
                         Lapse_Blue_On_CD = this_player.Cooldowns:WaitForChild("Lapse Blue", 5)
                         if Lapse_Blue_On_CD then 
-                            print("waiting")
+                            if not Auto_Farm_Vars.Enabled then return end
+
+                            local max_index = 10
+                            local index = 0
                             repeat 
                                 task.wait(0.2)
-                            until (this_player.Cooldowns:FindFirstChild("Lapse Blue") == nil) or GLOBALS.PLAYER_JUST_DIED
-                            print('dont_wait_no_moore')
+                            until (this_player.Cooldowns:FindFirstChild("Lapse Blue") == nil) or GLOBALS.PLAYER_JUST_DIED or not Auto_Farm_Vars.Enabled or index > max_index
                             GOJO[2].Wait_For_Next = false
                         else
                             GOJO[2].Wait_For_Next = false
@@ -441,7 +434,7 @@ local Auto_Farm_Runtime = {
             end
         else
             if (GOJO[2].Lapse_Blue_Spinning_Part and GOJO[2].Lapse_Blue_Spinning_Part:IsDescendantOf(GLOBALS.FX)) then 
-                if (os.clock() - GOJO[2].Elapsed_time_since_new_part) < 3 then 
+                if ((os.clock() - GOJO[2].Elapsed_time_since_new_part) < 3) and Active_Target then 
                     local Position_REMOTE = GLOBALS.FX:FindFirstChild("RemoteEvent")
                     if Position_REMOTE then
                         if (os.clock() - GOJO[2].Elapsed_time_since_last_remote_fired) > 0.1 then 
