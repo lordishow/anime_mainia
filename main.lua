@@ -40,6 +40,12 @@ local SERVICES = {
     Teleport = game:GetService('TeleportService'),
 }
 
+local GLOBALS = {
+    FX = workspace.FX,
+    LIVING = workspace.Living,
+    TARGET = nil,
+}
+
 local this_player = {
     Player = SERVICES.Players.LocalPlayer,
     Character = SERVICES.Players.LocalPlayer.Character,
@@ -50,13 +56,30 @@ local this_player = {
 }
 
 this_player.Player.CharacterAdded:Connect(function(new_character)
-    this_player.Character = new_characterar
+    this_player.Character = new_character
     this_player.HumanoidRootPart = new_character:WaitForChild(
         'HumanoidRootPart'
     )
     this_player.Humanoid = new_character:WaitForChild('Humanoid')
     this_player.Ban = new_character:WaitForChild('Ban')
 end)
+-- // PRESETS // -- // PRESENTS //
+
+-- \\ NOJO \\ GOJO // 
+local Char_Presets = {
+    ["NOJO"] = {
+        [1] = nil,
+        [2] = {
+            Lapse_Blue_Spinning_Part = nil,
+            Elapsed_time_since_new_part = 0
+        },
+        [3] = nil,
+        [4] = {
+            Available_Evolved_Move = 0,
+        }
+    }
+}
+
 
 -- // GENERAL VARIABLES // GENERAL STORE //
 local Keep_On_Teleport = false
@@ -68,6 +91,48 @@ local Custom_Movement = {
     toggled = false,
     walkspeed = 16,
 }
+
+-- // AUTO FARM VARIABLES // // FARMING SIMULATOR //
+local Auto_Farm_Vars = {
+    Enabled = false,
+    Preset = "NOJO"
+}
+
+-- // FINDING TARGET VARIABLES // TARGET SPY //
+
+local Black_List = {}
+
+-- // UTILITARIAN FUNCTIONALITIES
+
+local function update_target()
+    if not GLOBALS.TARGET then
+        local Best_Quality_Target = nil
+        local Best_Humanoid = nil
+        for _, NPC_Model in GLOBALS.LIVING:GetChildren() do
+            if Black_List[NPC_Model] then continue end
+            if not SERVICES.Players:GetPlayerFromCharacter(NPC_Model) then
+                local _humanoid = NPC_Model:FindFirstChildOfClass("Humanoid")
+                if _humanoid and _humanoid.Health > 0 then
+                    if not Best_Quality_Target or (_humanoid.Health < Best_Humanoid.Health) then
+                        Best_Quality_Target = NPC_Model
+                        Best_Humanoid = _humanoid
+                    end
+                end
+            end
+        end
+        GLOBALS.TARGET = Best_Quality_Target
+    else
+        local should_blacklist_target = false
+        local _humanoid = GLOBALS.TARGET:FindFirstChildOfClass("Humanoid")
+        if not _humanoid or _humanoid.Health <= 0 then
+            should_blacklist_target = true
+        end
+        if should_blacklist_target then
+            Black_List[GLOBALS.TARGET] = true
+            GLOBALS.TARGET = nil
+        end
+    end
+end
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
@@ -193,6 +258,79 @@ local Zero_Velocity_Keybind = Movement_Tab:CreateKeybind({
     end,
 })
 
+-- [[ FARM TAB ]] -- -- [[FARM TAB ]] -- -- [[FARM TAB ]] -- -- [[FARM TAB ]] -- -- [[FARM TAB ]] --
+
+-- [[FARM TAB ]] -- -- [[FARM TAB ]] -- -- [[FARM TAB ]] -- -- [[ MOVEMENT TAB ]] -- -- [[ FARM TAB ]] --
+
+local AutoFarm_Tab = Window:CreateTab('Auto Farm', 4483362458) -- Title, Image
+
+-- MOVE -- MOVEMENT  --
+local Section = AutoFarm_Tab:CreateSection('Char Selection')
+local Divider = AutoFarm_Tab:CreateDivider()
+
+local Auto_Farm_Enabled_Toggle = AutoFarm_Tab:CreateToggle({
+    Name = 'Auto Farm',
+    CurrentValue = false,
+    Flag = 'Auto_Farm_Togg',
+    Callback = function(Value)
+        if Value == false then 
+            Char_Presets["NOJO"][2].Elapsed_time_since_new_part = 10
+        end
+
+       Auto_Farm_Vars.Enabled = Value
+    end,
+})
+
+local Dropdown = AutoFarm_Tab:CreateDropdown({
+   Name = "Character Preset",
+   Options = {"NOJO"},
+   CurrentOption = "NOJO",
+   MultipleOptions = false,
+   Flag = "Character_Preset", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Option)
+        Auto_Farm_Vars.Preset = Option[1]
+   end,
+})
+
+-- // GOJO'S CHILD ADDED //
+
+local Visual_Effect_Child_Added_Functions = {
+    ["NOJO"] = function(adopted) 
+        if adopted.Name == "LapseBlue" then
+            local GOJO = Char_Presets[Auto_Farm_Vars.Preset] 
+            GOJO[2].Lapse_Blue_Spinning_Part = adopted
+            GOJO[2].Elapsed_time_since_new_part = os.clock()
+        end
+    end
+}
+
+GLOBALS.FX.ChildAdded:Connect(function(adopted) 
+    local VECAF_Func = Visual_Effect_Child_Added_Functions[Auto_Farm_Vars.Preset]
+    if VECAF_Func then 
+        VECAF_Func(adopted)
+    end
+end)
+
+local Auto_Farm_Runtime = {
+    ["NOJO"] = function() -- GOJO // NOJO // GOJO
+        local GOJO = Char_Presets["NOJO"]
+        if GLOBALS.TARGET == nil then 
+            return
+        end
+        if not (GOJO[2].Lapse_Blue_Spinning_Part and GOJO[2].Lapse_Blue_Spinning_Part:IsDescendantOf(GLOBALS.FX)) then 
+            return
+        end
+        if (os.clock() - GOJO[2].Elapsed_time_since_new_part) > 3 then 
+            return
+        end
+
+        local offset = GOJO[2].Lapse_Blue_Spinning_Part.Position - this_player.HumanoidRootPart.Position
+        local desiredHRPPosition = GLOBALS.TARGET.HumanoidRootPart.Position - offset
+        this_player.HumanoidRootPart.CFrame = CFrame.new(desiredHRPPosition)
+    end,
+}
+
+-- run
 RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
     function(__delta__)
         if RUNTIME._running_ == false then
@@ -201,6 +339,8 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
             Rayfield:Destroy()
             return
         end
+        
+        update_target()
 
         task.spawn(function() -- CUSTOM MOVEMENT LOGIC
             if Custom_Movement.toggled then
@@ -208,15 +348,25 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
             end
         end)
 
-        task.spawn(function() 
+        task.spawn(function() -- ZERO VELOCITY 
             if Zero_Velocity then
                 this_player.HumanoidRootPart.Anchored = true
                 this_player.HumanoidRootPart.Velocity = Vector3.zero
                  this_player.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
             end
         end)
+
+        task.spawn(function() -- GOJO LAPSE BLUE 
+            if Auto_Farm_Vars.Enabled then 
+                local auto_farm_func = Auto_Farm_Runtime[Auto_Farm_Vars.Preset]
+                if auto_farm_func then 
+                    auto_farm_func()
+                end
+            end
+        end) 
     end
 )
+
 this_player.Player.OnTeleport:Connect(function(State)
     if (State == Enum.TeleportState.Started or State == Enum.TeleportState.InProgress) and Keep_On_Teleport then
     queue_on_teleport([[
