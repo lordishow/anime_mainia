@@ -352,7 +352,12 @@ local Visual_Effect_Child_Added_Functions = {
 
 GLOBALS.FX.ChildAdded:Connect(function(adopted)
     if adopted.Name == "FlyingRocks" then 
-        adopted:Destroy()
+        repeat
+            if adopted then 
+                adopted:Destroy()
+            end 
+            task.wait()
+        until adopted == nil
         return
     end
     local VECAF_Func = Visual_Effect_Child_Added_Functions[Auto_Farm_Vars.Preset]
