@@ -358,7 +358,7 @@ local Auto_Farm_Runtime = {
     ["NOJO"] = function() -- GOJO // NOJO // GOJO
         local GOJO = Char_Presets["NOJO"]
         local Active_Target = true
-        if GLOBALS.TARGET == nil then 
+        if GLOBALS.TARGET == nil or GLOBALS.TARGET:FindFirstChild("HumanoidRootPart") == nil then 
             Active_Target = false
         end
         local Gojo_Chant_Status = GLOBALS.STATUS:FindFirstChild("GojoChant")
@@ -464,10 +464,10 @@ local Auto_Farm_Runtime = {
             end
         end
         
-        if not Reversal_Red_On_CD and Lapse_Blue_On_CD and Auto_Farm_Vars.Enabled then 
-            if GLOBALS.PLAYER_JUST_DIED then 
+        if not Reversal_Red_On_CD and Auto_Farm_Vars.Enabled then 
+            if not GLOBALS.PLAYER_JUST_DIED then 
                 if Can_Fire_Remote and not GOJO[1].Wait_For_Next then 
-                    GOJO.Offset_CFrame = CFrame.new(0,0,-40)
+                    GOJO.Offset_CFrame = CFrame.new(0,0,30)
                     local args = {
                         [1] = {
                             [1] = "Skill",
@@ -494,12 +494,16 @@ local Auto_Farm_Runtime = {
                 GOJO[1].Wait_For_Next = false
             end
         end
-        
+
+        if GLOBALS.TARGET == nil or GLOBALS.TARGET:FindFirstChild("HumanoidRootPart") == nil then 
+            Active_Target = false
+        end
         if Active_Target then 
-            local LookAtCFrame = CFrame.new(this_player.HumanoidRootPart.Position, GLOBALS.TARGET.HumanoidRootPart.Position)
-            this_player.HumanoidRootPart.CFrame = LookAtCFrame
-            this_player.HumanoidRootPart.CFrame = CFrame.new((GLOBALS.TARGET.HumanoidRootPart.CFrame * GOJO.Offset_CFrame).Position)
-            this_player.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0,0,0)
+            -- Step 1: Compute the target position with offset
+            local offsetCFrame = GLOBALS.TARGET.HumanoidRootPart.CFrame * GOJO.Offset_CFrame
+            -- Step 3: Apply to player
+            this_player.HumanoidRootPart.CFrame = offsetCFrame
+            this_player.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
         end
 
         --[[
