@@ -489,7 +489,12 @@ local Auto_Farm_Runtime = {
                         end
                     end)
                     GOJO.Thread_Yielded = true
-                    task.wait(2)
+                    for i = 1, 10 do 
+                        GOJO.Thread_Yielded = true
+                        GOJO.Offset_CFrame = CFrame.new(0,0,30)
+                        task.wait(0.1)
+                    end
+                    task.wait(1)
                     GOJO.Thread_Yielded = false
                 end
             else
