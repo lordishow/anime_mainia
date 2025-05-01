@@ -503,7 +503,7 @@ local Auto_Farm_Runtime = {
             local offsetCFrame = GLOBALS.TARGET.HumanoidRootPart.CFrame * GOJO.Offset_CFrame
 
             this_player.HumanoidRootPart.CFrame = offsetCFrame
-            --this_player.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
+            this_player.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
         end
 
         --[[
