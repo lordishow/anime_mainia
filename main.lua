@@ -575,9 +575,10 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
         
         update_target()
 
-        local flying_rocks = GLOBALS.FX:FindFirstChild("FlyingRocks")
-        if flying_rocks then 
-            flying_rocks:Destroy()
+        for _,rock in GLOBALS.FX:GetChildren() do 
+            if rock.Name == "FlyingRocks" then 
+                rock:Destroy()
+            end
         end
 
         task.spawn(function() -- CUSTOM MOVEMENT LOGIC
