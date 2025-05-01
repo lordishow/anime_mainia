@@ -458,7 +458,7 @@ local Auto_Farm_Runtime = {
             end
         end
         
-        if not Reversal_Red_On_CD and Lapse_Blue_On_CD and  Auto_Farm_Vars.Enabled and Active_Target then 
+        if not Reversal_Red_On_CD and (Lapse_Blue_On_CD or Hollow_Purple_On_CD) and  Auto_Farm_Vars.Enabled and Active_Target then 
             if not GLOBALS.PLAYER_JUST_DIED then 
                 if Can_Fire_Remote and not GOJO[1].Wait_For_Next and GOJO[4].Available_Evolved_Move >= 1 then 
                     GOJO.Offset_CFrame = CFrame.new(0,0,30)
