@@ -350,7 +350,11 @@ local Visual_Effect_Child_Added_Functions = {
     end
 }
 
-GLOBALS.FX.ChildAdded:Connect(function(adopted) 
+GLOBALS.FX.ChildAdded:Connect(function(adopted)
+    if adopted.Name == "FlyingRocks" then 
+        adopted:Destroy()
+        return
+    end
     local VECAF_Func = Visual_Effect_Child_Added_Functions[Auto_Farm_Vars.Preset]
     if VECAF_Func then 
         VECAF_Func(adopted)
@@ -574,12 +578,6 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
         end
         
         update_target()
-
-        for _,rock in GLOBALS.FX:GetChildren() do 
-            if rock.Name == "FlyingRocks" then 
-                rock:Destroy()
-            end
-        end
 
         task.spawn(function() -- CUSTOM MOVEMENT LOGIC
             if Custom_Movement.toggled then
