@@ -378,7 +378,7 @@ local Auto_Farm_Runtime = {
 
         local Can_Fire_Remote = ((os.clock() - Last_Time_Input_Was_Fired) > 0.1)
 
-        if not Chanting_On_CD and Auto_Farm_Vars.Enabled then
+        if not Chanting_On_CD and Auto_Farm_Vars.Enabled and Active_Target then
             if GLOBALS.PLAYER_JUST_DIED then
                 GOJO[4].Available_Evolved_Move = 0
                 GOJO[4].Wait_For_Next = false
@@ -414,7 +414,7 @@ local Auto_Farm_Runtime = {
             end 
         end
 
-        if not Lapse_Blue_On_CD and Auto_Farm_Vars.Enabled then
+        if not Lapse_Blue_On_CD and Auto_Farm_Vars.Enabled and Active_Target then
             if not GLOBALS.PLAYER_JUST_DIED then
                 if Can_Fire_Remote and GOJO[4].Available_Evolved_Move >= 2 then
                     if (not GOJO[2].Wait_For_Next and not Player_Is_Stunned) and (os.clock() - GOJO[2].Last_Attack_Delay_Time) > GOJO[2].Attack_Delay then 
@@ -464,7 +464,7 @@ local Auto_Farm_Runtime = {
             end
         end
         
-        if not Reversal_Red_On_CD and Auto_Farm_Vars.Enabled then 
+        if not Reversal_Red_On_CD and Lapse_Blue_On_CD and  Auto_Farm_Vars.Enabled and Active_Target then 
             if not GLOBALS.PLAYER_JUST_DIED then 
                 if Can_Fire_Remote and not GOJO[1].Wait_For_Next then 
                     GOJO.Offset_CFrame = CFrame.new(0,0,30)
@@ -495,15 +495,15 @@ local Auto_Farm_Runtime = {
             end
         end
 
+        -- doing again cuz delayes (speaking form expirience)
         if GLOBALS.TARGET == nil or GLOBALS.TARGET:FindFirstChild("HumanoidRootPart") == nil then 
             Active_Target = false
         end
         if Active_Target then 
-            -- Step 1: Compute the target position with offset
             local offsetCFrame = GLOBALS.TARGET.HumanoidRootPart.CFrame * GOJO.Offset_CFrame
-            -- Step 3: Apply to player
+
             this_player.HumanoidRootPart.CFrame = offsetCFrame
-            this_player.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
+            --this_player.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
         end
 
         --[[
