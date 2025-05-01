@@ -503,12 +503,8 @@ local Auto_Farm_Runtime = {
         end
 
         if not Hollow_Purple_On_CD and (Lapse_Blue_On_CD or Hollow_Purple_On_CD) and Auto_Farm_Vars.Enabled and Active_Target and not GOJO.Thread_Yielded then 
-            print("fcp")
             if not GLOBALS.PLAYER_JUST_DIED then 
-                print("gcp")
                 if Can_Fire_Remote and not GOJO[3].Wait_For_Next and GOJO[4].Available_Evolved_Move <= 2 then 
-                    print("fnlcp")
-                    print("offset HP")
                     print(GOJO.Thread_Yielded)
                     GOJO.Offset_CFrame = CFrame.new(0,50,0)
                     local args = {
