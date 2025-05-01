@@ -79,6 +79,7 @@ end)
 local Char_Presets = {
     ["NOJO"] = {
         Offset_CFrame = CFrame.new(0,0,0),
+        Thread_Yielded = false,
         [1] = {
             Wait_For_Next = false,
         },
@@ -90,7 +91,9 @@ local Char_Presets = {
             Elapsed_time_since_new_part = 0,
             Elapsed_time_since_last_remote_fired = 0
         },
-        [3] = nil,
+        [3] = {
+            Wait_For_Next = false,
+        },
         [4] = {
             Wait_For_Next = false,
             Available_Evolved_Move = 0,
@@ -357,6 +360,7 @@ end)
 local Auto_Farm_Runtime = {
     ["NOJO"] = function() -- GOJO // NOJO // GOJO
         local GOJO = Char_Presets["NOJO"]
+        if GOJO.Thread_Yielded then return end
         local Active_Target = true
         if GLOBALS.TARGET == nil or GLOBALS.TARGET:FindFirstChild("HumanoidRootPart") == nil then 
             Active_Target = false
@@ -373,6 +377,7 @@ local Auto_Farm_Runtime = {
         local Lapse_Blue_On_CD = this_player.Cooldowns:FindFirstChild("Lapse Blue") and true or false
         local Chanting_On_CD = this_player.Cooldowns:FindFirstChild("Chanting") and true or false
         local Reversal_Red_On_CD = this_player.Cooldowns:FindFirstChild("Reversal Red")
+        local Hollow_Purple_On_CD = this_player.Cooldowns:FindFirstChild("Hollow Purple")
 
         local Player_Is_Stunned = GLOBALS.STATUS:FindFirstChild("Stunned") and true or false
 
@@ -403,7 +408,7 @@ local Auto_Farm_Runtime = {
                             task.spawn(function()
                                 local max_index = 10
                                 local index = 0 
-                                repeat task.wait(0.2) index += 1 until this_player.Cooldowns:FindFirstChild("Chanting", 2) == nil or GLOBALS.PLAYER_JUST_DIED or not Auto_Farm_Vars.Enabled or index >= max_index
+                                repeat task.wait(0.1) index += 1 until this_player.Cooldowns:FindFirstChild("Chanting", 2) == nil or GLOBALS.PLAYER_JUST_DIED or not Auto_Farm_Vars.Enabled or index >= max_index
                                 GOJO[4].Wait_For_Next = false
                             end)
                         else
@@ -414,10 +419,11 @@ local Auto_Farm_Runtime = {
             end 
         end
 
-        if not Lapse_Blue_On_CD and Auto_Farm_Vars.Enabled and Active_Target then
+        if not Lapse_Blue_On_CD  and Auto_Farm_Vars.Enabled and Active_Target then
             if not GLOBALS.PLAYER_JUST_DIED then
                 if Can_Fire_Remote and GOJO[4].Available_Evolved_Move >= 2 then
                     if (not GOJO[2].Wait_For_Next and not Player_Is_Stunned) and (os.clock() - GOJO[2].Last_Attack_Delay_Time) > GOJO[2].Attack_Delay then 
+                        GOJO.Offset_CFrame = CFrame.new(0,50,0)
                         local args = {
                             [1] = {
                                 [1] = "Skill",
@@ -438,7 +444,7 @@ local Auto_Farm_Runtime = {
                             local max_index = 10
                             local index = 0
                             repeat 
-                                task.wait(0.2)
+                                task.wait(0.1)
                             until (this_player.Cooldowns:FindFirstChild("Lapse Blue") == nil) or GLOBALS.PLAYER_JUST_DIED or not Auto_Farm_Vars.Enabled or index > max_index
                             GOJO[2].Wait_For_Next = false
                         else
@@ -450,24 +456,13 @@ local Auto_Farm_Runtime = {
                 GOJO[2].Last_Attack_Delay_Time = os.clock()
                 GOJO[2].Wait_For_Next = false
             end
-        else
-            if (GOJO[2].Lapse_Blue_Spinning_Part and GOJO[2].Lapse_Blue_Spinning_Part:IsDescendantOf(GLOBALS.FX)) then 
-                if Can_Fire_Remote and Active_Target then 
-                    local Position_REMOTE = GLOBALS.FX:FindFirstChild("RemoteEvent")
-                    if Position_REMOTE then
-                        if (os.clock() - GOJO[2].Elapsed_time_since_last_remote_fired) > 0.1 then 
-                            GOJO[2].Elapsed_time_since_last_remote_fired = os.clock()
-                            Position_REMOTE:FireServer(GLOBALS.TARGET.HumanoidRootPart.CFrame)
-                        end 
-                    end
-                end
-            end
         end
         
         if not Reversal_Red_On_CD and Lapse_Blue_On_CD and  Auto_Farm_Vars.Enabled and Active_Target then 
             if not GLOBALS.PLAYER_JUST_DIED then 
-                if Can_Fire_Remote and not GOJO[1].Wait_For_Next then 
+                if Can_Fire_Remote and not GOJO[1].Wait_For_Next and GOJO[4].Available_Evolved_Move >= 1 then 
                     GOJO.Offset_CFrame = CFrame.new(0,0,30)
+                    print("SHOULD BE ON COOLDOWN AND HALT THE THREAD")
                     local args = {
                         [1] = {
                             [1] = "Skill",
@@ -476,25 +471,72 @@ local Auto_Farm_Runtime = {
                     }
                     GLOBALS.INPUT:FireServer(unpack(args))
                     GOJO[1].Wait_For_Next = true
+                    
                     Reversal_Red_On_CD = this_player.Cooldowns:WaitForChild("Reversal Red", 5)
-                    if Reversal_Red_On_CD then 
-                        if not Auto_Farm_Vars.Enabled then return end
+                    task.spawn(function() 
+                        if Reversal_Red_On_CD then 
+                            if not Auto_Farm_Vars.Enabled then return end
 
-                        local max_index = 10
-                        local index = 0
-                        repeat 
-                            task.wait(0.2)
-                        until (this_player.Cooldowns:FindFirstChild("Reversal Red") == nil) or GLOBALS.PLAYER_JUST_DIED or not Auto_Farm_Vars.Enabled or index > max_index
-                        GOJO[1].Wait_For_Next = false
-                    else
-                        GOJO[1].Wait_For_Next = false
-                    end
+                            local max_index = 10
+                            local index = 0
+                            repeat 
+                                task.wait(0.1)
+                            until (this_player.Cooldowns:FindFirstChild("Reversal Red") == nil) or GLOBALS.PLAYER_JUST_DIED or not Auto_Farm_Vars.Enabled or index > max_index
+                            GOJO[1].Wait_For_Next = false
+                        else
+                            GOJO[1].Wait_For_Next = false
+                        end
+                    end)
+                    GOJO.Thread_Yielded = true
+                    task.wait(2)
+                    GOJO.Thread_Yielded = false
                 end
             else
                 GOJO[1].Wait_For_Next = false
             end
         end
+        print("zero")
+        if Reversal_Red_On_CD or Lapse_Blue_On_CD and Auto_Farm_Enabled_Toggle.Enabled and Active_Target then 
+            if not GLOBALS.PLAYER_JUST_DIED then 
+                if Can_Fire_Remote and not GOJO[3].Wait_For_Next and GOJO[4].Available_Evolved_Move <= 2 then 
+                    GOJO.Offset_CFrame = CFrame.new(0,50,0)
+                    local args = {
+                        [1] = {
+                            [1] = "Skill",
+                            [2] = "3"
+                        }
+                    }
+                    GLOBALS.INPUT:FireServer(unpack(args))
+                    GOJO[3].Wait_For_Next = true
+                    Hollow_Purple_On_CD = this_player.Cooldowns:FindFirstChild("Hollow Purple")
+                    task.spawn(function() 
+                        if Hollow_Purple_On_CD then 
+                            if not Auto_Farm_Vars.Enabled then return end
 
+                            local max_index = 10
+                            local index = 0
+                            repeat 
+                                task.wait(0.2)
+                            until (this_player.Cooldowns:FindFirstChild("Hollow Purple") == nil) or GLOBALS.PLAYER_JUST_DIED or not Auto_Farm_Vars.Enabled or index > max_index
+                            GOJO[3].Wait_For_Next = false
+                        else
+                            GOJO[3].Wait_For_Next = false
+                        end
+                    end)
+                end
+            else
+                GOJO[3].Wait_For_Next = false
+            end
+        end
+
+        if Can_Fire_Remote and Active_Target then 
+            local Position_REMOTE = GLOBALS.FX:FindFirstChild("RemoteEvent")
+            if Position_REMOTE then
+                if Can_Fire_Remote then 
+                    Position_REMOTE:FireServer(GLOBALS.TARGET.HumanoidRootPart.CFrame)
+                end 
+             end
+        end
         -- doing again cuz delayes (speaking form expirience)
         if GLOBALS.TARGET == nil or GLOBALS.TARGET:FindFirstChild("HumanoidRootPart") == nil then 
             Active_Target = false
@@ -525,6 +567,11 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
         end
         
         update_target()
+
+        local flying_rocks = GLOBALS.FX:FindFirstChild("FlyingRocks")
+        if flying_rocks then 
+            flying_rocks:Destroy()
+        end
 
         task.spawn(function() -- CUSTOM MOVEMENT LOGIC
             if Custom_Movement.toggled then
