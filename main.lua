@@ -351,15 +351,6 @@ local Visual_Effect_Child_Added_Functions = {
 }
 
 GLOBALS.FX.ChildAdded:Connect(function(adopted)
-    if adopted.Name == "FlyingRocks" then 
-        repeat
-            if adopted then 
-                adopted:Destroy()
-            end 
-            task.wait()
-        until adopted == nil
-        return
-    end
     local VECAF_Func = Visual_Effect_Child_Added_Functions[Auto_Farm_Vars.Preset]
     if VECAF_Func then 
         VECAF_Func(adopted)
@@ -368,6 +359,10 @@ end)
 
 local Auto_Farm_Runtime = {
     ["NOJO"] = function() -- GOJO // NOJO // GOJO
+        if game:GetService("ReplicatedStorage"):FindFirstChild("Effect_Mods") and game:GetService("ReplicatedStorage"):FindFirstChild("Effect_Mods")["Honored One"] then 
+            game:GetService("ReplicatedStorage").Effect_Mods["Honored One"].Parent:Destroy()
+        end
+
         local GOJO = Char_Presets["NOJO"]
 
         local Active_Target = true
@@ -511,7 +506,7 @@ local Auto_Farm_Runtime = {
             end
         end
 
-        if (not Hollow_Purple_On_CD and (Lapse_Blue_On_CD or Hollow_Purple_On_CD) and Auto_Farm_Vars.Enabled and Active_Target and not GOJO.Thread_Yielded) and 1 == 2 then 
+        if (not Hollow_Purple_On_CD and (Lapse_Blue_On_CD or Hollow_Purple_On_CD) and Auto_Farm_Vars.Enabled and Active_Target and not GOJO.Thread_Yielded) then 
             if not GLOBALS.PLAYER_JUST_DIED then 
                 if Can_Fire_Remote and not GOJO[3].Wait_For_Next and GOJO[4].Available_Evolved_Move <= 2 then 
                     print(GOJO.Thread_Yielded)
