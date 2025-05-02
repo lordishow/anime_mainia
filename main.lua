@@ -402,9 +402,18 @@ local Auto_Farm_Runtime = {
                             }
                         }
                         local Previous_Chant_Value = GOJO[4].Available_Evolved_Move
-                        Last_Time_Input_Was_Fired = os.clock()
-                        GLOBALS.INPUT:FireServer(unpack(args))
                         GOJO[4].Wait_For_Next = true
+                        Last_Time_Input_Was_Fired = os.clock()
+                        if GOJO[4].Available_Evolved_Move == 0 then 
+                            for i = 1,2 do 
+                                GLOBALS.INPUT:FireServer(unpack(args))
+                                task.wait()
+                            end
+                        else
+                            GLOBALS.INPUT:FireServer(unpack(args))
+                        end
+                        
+                        
                         Chanting_On_CD = this_player.Cooldowns:WaitForChild("Chanting", 2)
                         if Chanting_On_CD then
                             if Auto_Farm_Vars.Enabled == false then return end
@@ -437,10 +446,10 @@ local Auto_Farm_Runtime = {
                         }
                         GOJO[2].Wait_For_Next = true
                         Last_Time_Input_Was_Fired = os.clock()
-                        GLOBALS.INPUT:FireServer(unpack(args))
-
-                        GOJO[4].Wait_For_Next = false
-                        GOJO[4].Available_Evolved_Move = 0
+                        for i = 1,10 do 
+                            GLOBALS.INPUT:FireServer(unpack(args))
+                            task.wait()
+                        end
 
                         Lapse_Blue_On_CD = this_player.Cooldowns:WaitForChild("Lapse Blue", 5)
                         if Lapse_Blue_On_CD then 
