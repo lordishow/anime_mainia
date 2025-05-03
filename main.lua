@@ -31,6 +31,8 @@ else
 end
 local RUNTIME = RNR_ENVIRONMENT.RUNTIME
 
+
+
 local SERVICES = {
     Replicated = game:GetService('ReplicatedStorage'),
     UserInput = game:GetService('UserInputService'),
@@ -38,6 +40,7 @@ local SERVICES = {
     CoreGui = game:GetService('CoreGui'),
     Run = game:GetService('RunService'),
     Teleport = game:GetService('TeleportService'),
+    Http = game:GetService("HttpService"),
 }
 
 local GLOBALS = {
@@ -72,6 +75,7 @@ this_player.Player.CharacterAdded:Connect(function(new_character)
         GLOBALS.PLAYER_JUST_DIED = false
     end)
 end)
+
 -- // PRESETS // -- // PRESENTS //
 
 -- \\ NOJO \\ GOJO // 
@@ -173,8 +177,8 @@ local Window = Rayfield:CreateWindow({
 
     ConfigurationSaving = {
         Enabled = true,
-        FolderName = 'Anime_Mainia_Globberguk', -- Create a custom folder for your hub/game
-        FileName = 'config',
+        FolderName = "Lords_Anime_Mainia", -- Create a custom folder for your hub/game
+        FileName = "_configuration_",
     },
 
     Discord = {
@@ -200,7 +204,7 @@ local General_Tab = Window:CreateTab('General', 4483362458) -- Title, Image
 local Keep_After_Teleport_Toggle = General_Tab:CreateToggle({
     Name = 'Keep after teleport',
     CurrentValue = false,
-    Flag = 'keep after tp',
+    Flag = 'keep_after_tp',
     Callback = function(Value)
        Keep_On_Teleport = Value
     end,
@@ -254,7 +258,7 @@ local CustomSpeed_Keybind = Movement_Tab:CreateKeybind({
     Name = 'Custom Speed Keybind',
     CurrentKeybind = 'T',
     HoldToInteract = false,
-    Flag = 'Custom_sPEED_Ke_bind', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Flag = 'Custom_Speed_Bind', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
     Callback = function()
         Custom_Speed_Toggle:Set(not Custom_Movement.toggled)
     end,
@@ -265,7 +269,7 @@ local Divider = Movement_Tab:CreateDivider()
 local Zero_Vel_Toggle = Movement_Tab:CreateToggle({
     Name = 'Zero Velocity',
     CurrentValue = false,
-    Flag = 'custom_speed_togg',
+    Flag = 'Zero_Velocity_Toggle',
     Callback = function(Value)
         Zero_Velocity = Value
         if Value == false then 
@@ -278,7 +282,7 @@ local Zero_Velocity_Keybind = Movement_Tab:CreateKeybind({
     Name = 'Zero Velocity Keybind',
     CurrentKeybind = 'F',
     HoldToInteract = false,
-    Flag = 'ZerO_vel', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Flag = 'Zero_Velocity_Keybind', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
     Callback = function()
         Zero_Vel_Toggle:Set(not Zero_Velocity)
     end,
@@ -297,7 +301,7 @@ local Divider = AutoFarm_Tab:CreateDivider()
 local Auto_Farm_Enabled_Toggle = AutoFarm_Tab:CreateToggle({
     Name = 'Auto Farm',
     CurrentValue = false,
-    Flag = 'Auto_Farm_Togg',
+    Flag = 'Auto_Farm_Toggle',
     Callback = function(Value)
        Auto_Farm_Vars.Enabled = Value
     end,
@@ -308,7 +312,7 @@ local Dropdown = AutoFarm_Tab:CreateDropdown({
    Options = {"NOJO"},
    CurrentOption = "NOJO",
    MultipleOptions = false,
-   Flag = "Character_Preset", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "Character_Preset_Table", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Option)
         Auto_Farm_Vars.Preset = Option[1]
    end,
@@ -321,23 +325,25 @@ local Starting_Delay_Slider = AutoFarm_Tab:CreateSlider({
     Name = 'Lapse Blue Starting Delay',
     Range = { 0, 10 },
     Increment = 1,
-    Suffix = 'Radius',
+    Suffix = 'Delay',
     CurrentValue = 0,
-    Flag = 'Radius_Slider', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Flag = 'Lapse_Blue_Cast_Delay', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
     Callback = function(Value)
         Char_Presets["NOJO"][2].Attack_Delay = Value
     end,
 })
 
-local Zero_Velocity_Keybind = AutoFarm_Tab:CreateKeybind({
+local Auto_Farm_Bind = AutoFarm_Tab:CreateKeybind({
     Name = 'Auto Farm Keybind',
     CurrentKeybind = 'G',
     HoldToInteract = false,
-    Flag = 'af_key_vel', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Flag = 'Auto_Farm_Keybind', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
     Callback = function()
         Auto_Farm_Enabled_Toggle:Set(not Auto_Farm_Vars.Enabled)
     end,
 })
+
+
 -- // GOJO'S CHILD ADDED //
 
 local Visual_Effect_Child_Added_Functions = {
@@ -613,10 +619,14 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
     end
 )
 
+Rayfield:LoadConfiguration()
+
+local already_queued = false
 this_player.Player.OnTeleport:Connect(function(State)
-    if (State == Enum.TeleportState.Started or State == Enum.TeleportState.InProgress) and Keep_On_Teleport then
-    queue_on_teleport([[
-            loadstring(game:HttpGet('https://raw.githubusercontent.com/lordishow/anime_mainia/refs/heads/main/main.lua'))()
-    ]])
+    if (State == Enum.TeleportState.Started or State == Enum.TeleportState.InProgress) and Keep_On_Teleport and already_queued == false then
+    already_queued = true
+		queue_on_teleport([[
+				loadstring(game:HttpGet('https://raw.githubusercontent.com/lordishow/anime_mainia/refs/heads/main/main.lua'))()
+		]])
     end
 end)
