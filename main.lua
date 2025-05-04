@@ -78,6 +78,7 @@ this_player.Player.CharacterAdded:Connect(function(new_character)
     task.delay(1.5, function() 
         GLOBALS.PLAYER_JUST_DIED = false
     end)
+    Update_Units_In_Inventory()
 end)
 
 -- // PRESETS // -- // PRESENTS //
@@ -141,6 +142,7 @@ local Gatcha_Vars = {
     Notify_On_Full_Inv = false,
     Used_Slots = 0,
     Volume = 1.5,
+    Rolling = false,
 }
 
 -- // AUTO FEED 😱😱😱😱
@@ -162,18 +164,24 @@ local Auto_Feed_Vars = {
     Every_Unit_In_Inventory = {},
     Feedables = {},
     Unit_To_Feed = "",
+    Feed_char_in_first_slot = false,
     Rarities_Allowed_To_Be_Fed = {
         ["Fodder"] = false,
         ["Common"] = false,
         ["Uncommon"] = false,
         ["Rare"] = false,
-    }
+    },
+    Level_To_Reach = 0,
 
 }
 
 local Available_Characters_dropdown;
 
 -- // UTILITARIAN FUNCTIONALITIES
+
+local function Feed(Args)
+    print("feed_")
+end
 
 local function Update_Units_In_Inventory()
     if GLOBALS.INVENTORY then 
@@ -195,6 +203,7 @@ local function Update_Units_In_Inventory()
                     Level = tonumber(Numbered_Level),
                     Rarity = Rarity.Text,
                     Favorited = Star.Visible,
+                    Equipped = Unit.Equipped.Visible,
                 }
             end
         end
@@ -216,7 +225,7 @@ local function Update_Units_In_Inventory()
                 table.insert(Dropdown_Safe_Units_To_Feed, Unit.Name)
             end
         end
-
+        
         Available_Characters_dropdown:Refresh(Dropdown_Safe_Units_To_Feed)
     end
 end
@@ -535,7 +544,7 @@ local Feed_First_Slot_Char_Togg = Feeding_Tab:CreateToggle({
     CurrentValue = false,
     Flag = nil,
     Callback = function(Value)
-
+        Auto_Feed_Vars.Feed_char_in_first_slot = Value
     end,
 })
 local Divider = Feeding_Tab:CreateDivider()
@@ -545,7 +554,7 @@ local Feed_Fodder_togg  = Feeding_Tab:CreateToggle({
     CurrentValue = false,
     Flag = "feed_fodders",
     Callback = function(Value)
-
+       Auto_Feed_Vars.Rarities_Allowed_To_Be_Fed["Fodder"] = Value
     end,
 })
 
@@ -554,7 +563,7 @@ local Feed_Common_togg  = Feeding_Tab:CreateToggle({
     CurrentValue = false,
     Flag = "feed_commons",
     Callback = function(Value)
-
+        Auto_Feed_Vars.Rarities_Allowed_To_Be_Fed["Common"] = Value
     end,
 })
 
@@ -563,7 +572,7 @@ local Feed_Uncommon_togg = Feeding_Tab:CreateToggle({
     CurrentValue = false,
     Flag = "feed_uncommons",
     Callback = function(Value)
-
+        Auto_Feed_Vars.Rarities_Allowed_To_Be_Fed["Uncommon"] = Value
     end,
 })
 
@@ -572,7 +581,7 @@ local Feed_Uncommon_togg = Feeding_Tab:CreateToggle({
     CurrentValue = false,
     Flag = "feed_rares",
     Callback = function(Value)
-
+        Auto_Feed_Vars.Rarities_Allowed_To_Be_Fed["Rare"] = Value
     end,
 })
 
@@ -587,15 +596,78 @@ local Level_To_Reach_Input = Feeding_Tab:CreateInput({
     RemoveTextAfterFocusLost = false,
     Flag = "Level_To_Feed_To_Reach",
     Callback = function(Text)
+        local succ, result = pcall(tonumber, Text)
+        if not succ then warn(result) return end
+        Auto_Feed_Vars.Level_To_Reach = result
         
+        local Selected_Character;
+            for _,Unit in Auto_Feed_Vars.Units_To_Feed do 
+                if Unit.Equipped then 
+                    Selected_Character = Unit
+                    break
+                end
+            end
+            if Selected_Character then 
+            local Lvl_Goal = Auto_Feed_Vars.Level_To_Reach -- 100
+            local Curr_Lvl = Selected_Character.Level -- 1
+                
+            local goal_m_one = (Lvl_Goal - 1) -- 99
+            local n = (goal_m_one - Curr_Lvl) + 1 
+            local xp = (Curr_Lvl * 5) + (goal_m_one * 5)
+            local Required_Exp = (xp * n) / 2
+
+            Required_Exp_Label:Set(`EXP: {Required_Exp}`)
+            end
     end,
 })
 
 local feed_button = Feeding_Tab:CreateButton({
-   Name = "Feed",
-   Callback = function()
+    Name = "Feed",
+    Callback = function()
+        if Auto_Feed_Vars.Feed_char_in_first_slot then
+            local Selected_Character;
+            for _,Unit in Auto_Feed_Vars.Units_To_Feed do 
+                if Unit.Equipped then 
+                    Selected_Character = Unit
+                    break
+                end
+            end
+            if Selected_Character then 
+                local Lvl_Goal = Auto_Feed_Vars.Level_To_Reach -- 100
+                local Curr_Lvl = Selected_Character.Level -- 1
+                
+                local goal_m_one = (Lvl_Goal - 1) -- 99
+                local n = (goal_m_one - Curr_Lvl) + 1 
+                local xp = (Curr_Lvl * 5) + (goal_m_one * 5)
+                local Required_Exp = (xp * n) / 2
 
-   end,
+                local Total_Exp = 0
+
+                local Feedable_Units = {}
+                for _,feedable in Auto_Feed_Vars.Feedables do 
+                    local Exp_From_Feedable = feedable.Level * Rarity_To_Multi[feedable.Rarity] * 2
+
+                    Feedable_Units[feedable.Key] = true
+                    Total_Exp += Exp_From_Feedable
+
+                    if Total_Exp > Required_Exp then
+                        break
+                    end
+                end
+
+                print(Required_Exp)
+                print(Total_Exp)
+
+                if #Feedable_Units > 0 then 
+                    local Arguments = {
+                        Feedable_Units,
+                        Selected_Character.Key
+                    }
+                    Feed(Arguments)
+                end
+            end
+        end
+    end,
 })
 
 local Auto_Feed_Toggle = Feeding_Tab:CreateToggle({
@@ -884,10 +956,22 @@ end
 -- gambling
 local function Gamble()
     if GLOBALS.INVENTORY then 
+        if Gatcha_Vars.Rolling == true then return end
         if Gatcha_Vars.Rolling_For == "GOLD" then 
+            Gatcha_Vars.Rolling = true
             GLOBALS.ROLLX10:InvokeServer(true)
+
+            
+            task.delay(0.6, function() 
+                Gatcha_Vars.Rolling = false
+            end)
         elseif Gatcha_Vars.Rolling_For == "GEMS" then 
+            Gatcha_Vars.Rolling = true
             GLOBALS.ROLLX10:InvokeServer()
+            
+            task.delay(0.6, function() 
+                Gatcha_Vars.Rolling = false
+            end)
         end
         if Gatcha_Vars.Notify_On_Full_Inv and Gatcha_Vars.Rolling_For ~= "" then 
             if GLOBALS.MAX_SLOTS.Value - Gatcha_Vars.Used_Slots <= 10 then 
@@ -941,6 +1025,7 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
 
 
 Rayfield:LoadConfiguration()
+Update_Units_In_Inventory()
 
 local already_queued = false
 this_player.Player.OnTeleport:Connect(function(State)
