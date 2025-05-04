@@ -143,6 +143,19 @@ local Gatcha_Vars = {
     Volume = 1.5,
 }
 
+-- // AUTO FEED 😱😱😱😱
+local Rarity_To_Multi = {
+    ["Fodder"] = 5,
+    ["Common"] = 2.5,
+    ["Uncommon"] = 5,
+    ["Rare"] = 10,
+    ["Legendary"] = 20,
+    ["Mythical"] = 30,
+    ["Legacy"] = 60,
+    ["GOD"] = 1000,
+    ["EXP"] = 15,
+    ["Artifact"] = 5
+}
 -- // UTILITARIAN FUNCTIONALITIES
 
 local function update_target()
@@ -424,6 +437,50 @@ local Test_Volume_Button = Gatcha_Tab:CreateButton({
         Alert_User_Of_Max_Inv()
    end,
 })
+
+-- [[ GATCHA TAB ]] -- -- [[ GATCHA TAB ]] -- -- [[ GATCHA TAB ]] -- -- [[ GATCHA TAB ]] -- -- [[ GATCHA TAB ]] --
+
+-- [[ GATCHA TAB ]] -- -- [[ GATCHA TAB ]] -- -- [[ GATCHA TAB ]] -- -- [[ GATCHA TAB ]] -- -- [[ FARM TAB ]] --
+
+local Feeding_Tab = Window:CreateTab('Feed', 4483362458) -- Title, Image
+
+-- MOVE -- MOVEMENT  --
+local Section = Feeding_Tab:CreateSection('Feeding')
+local Divider = Feeding_Tab:CreateDivider()
+
+local Available_Characters_ = Feeding_Tab:CreateDropdown({
+   Name = "Character To Feed",
+   Options = {},
+   CurrentOption = "NOJO",
+   MultipleOptions = false,
+   Flag = nil, -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Option)
+        -- Dropdown:Refresh({"Option 1", "Option 2", "Option 3"}) -- The new list of options available.
+   end,
+})
+
+local Feed_First_Slot_Char_Togg = Feeding_Tab:CreateToggle({
+    Name = 'Feed Character In First Slot',
+    CurrentValue = false,
+    Flag = nil,
+    Callback = function(Value)
+
+    end,
+})
+
+-- local Required_Exp_Label = Feeding_Tab:CreateLabel("EXP: 0", 4483362458, Color3.fromRGB(255, 255, 225), false) -- Title, Icon, Color, IgnoreTheme
+
+local Level_To_Reach_Input = Feeding_Tab:CreateInput({
+   Name = "Level To Reach",
+   CurrentValue = "0",
+   PlaceholderText = "0",
+   RemoveTextAfterFocusLost = false,
+   Flag = "Level_To_Feed_To",
+   Callback = function(Text)
+
+   end,
+})
+
 -- // GOJO'S CHILD ADDED //
 
 local Visual_Effect_Child_Added_Functions = {
@@ -705,7 +762,7 @@ local function Gamble()
         if Gatcha_Vars.Notify_On_Full_Inv and Gatcha_Vars.Rolling_For ~= "" then 
             if GLOBALS.MAX_SLOTS.Value - Gatcha_Vars.Used_Slots <= 10 then 
                 Roll_Gold_Banner:Set(false)
-                Roll_Gold_Banner:Set(false)
+                Roll_Gems_Banner:Set(false)
                 Gatcha_Vars.Rolling_For = ""
                 Alert_User_Of_Max_Inv()
             end
