@@ -156,7 +156,70 @@ local Rarity_To_Multi = {
     ["EXP"] = 15,
     ["Artifact"] = 5
 }
+
+local Auto_Feed_Vars = {
+    Units_To_Feed = {},
+    Every_Unit_In_Inventory = {},
+    Feedables = {},
+    Unit_To_Feed = "",
+    Rarities_Allowed_To_Be_Fed = {
+        ["Fodder"] = false,
+        ["Common"] = false,
+        ["Uncommon"] = false,
+        ["Rare"] = false,
+    }
+
+}
+
+local Available_Characters_dropdown;
+
 -- // UTILITARIAN FUNCTIONALITIES
+
+local function Update_Units_In_Inventory()
+    if GLOBALS.INVENTORY then 
+        table.clear(Auto_Feed_Vars.Units_To_Feed)
+        table.clear(Auto_Feed_Vars.Every_Unit_In_Inventory)
+        table.clear(Auto_Feed_Vars.Feedables)
+        
+        for _, Unit in GLOBALS.INVENTORY:GetChildren() do 
+            local Unit_Key = Unit:FindFirstChild("Key")
+            if Unit_Key then
+                local Level = Unit.Level 
+                local Rarity = Unit.Rarity
+                local Star = Unit.Star
+                local Numbered_Level = Level.Text:match("%d+")
+
+                Auto_Feed_Vars.Every_Unit_In_Inventory[Unit_Key.Value] = {
+                    Key = Unit_Key.Value,
+                    Name = Unit.Name,
+                    Level = tonumber(Numbered_Level),
+                    Rarity = Rarity.Text,
+                    Favorited = Star.Visible,
+                }
+            end
+        end
+        for _, Unit in Auto_Feed_Vars.Every_Unit_In_Inventory do 
+            if Unit.Rarity ~= "Fodder" and Unit.Rarity ~= "Artifact" then 
+                Auto_Feed_Vars.Units_To_Feed[Unit.Key] = Unit
+            end
+        end
+
+        for _, Unit in Auto_Feed_Vars.Every_Unit_In_Inventory do 
+            if Auto_Feed_Vars.Rarities_Allowed_To_Be_Fed[Unit.Rarity] ~= nil and not Unit.Favorited then 
+                Auto_Feed_Vars.Feedables[Unit.Key] = Unit
+                print(Unit.Level, Unit.Rarity)
+            end
+        end
+        local Dropdown_Safe_Units_To_Feed = {}
+        for _,Unit in Auto_Feed_Vars.Units_To_Feed do 
+            if not table.find(Dropdown_Safe_Units_To_Feed, Unit.Name) then 
+                table.insert(Dropdown_Safe_Units_To_Feed, Unit.Name)
+            end
+        end
+
+        Available_Characters_dropdown:Refresh(Dropdown_Safe_Units_To_Feed)
+    end
+end
 
 local function update_target()
     if not GLOBALS.TARGET then
@@ -267,7 +330,7 @@ local Movement_Speed_Slider = Movement_Tab:CreateSlider({
 })
 
 local Custom_Speed_Toggle = Movement_Tab:CreateToggle({
-    Name = 'Custom Speed Toggled',
+    Name = 'Custom Speed Enabled',
     CurrentValue = false,
     Flag = nil,
     Callback = function(Value)
@@ -448,14 +511,22 @@ local Feeding_Tab = Window:CreateTab('Feed', 4483362458) -- Title, Image
 local Section = Feeding_Tab:CreateSection('Feeding')
 local Divider = Feeding_Tab:CreateDivider()
 
-local Available_Characters_ = Feeding_Tab:CreateDropdown({
-   Name = "Character To Feed",
-   Options = {},
-   CurrentOption = "NOJO",
-   MultipleOptions = false,
-   Flag = nil, -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-   Callback = function(Option)
-        -- Dropdown:Refresh({"Option 1", "Option 2", "Option 3"}) -- The new list of options available.
+Available_Characters_dropdown = Feeding_Tab:CreateDropdown({
+    Name = "Character(S) To Feed",
+    Options = Auto_Feed_Vars.Units_To_Feed,
+    CurrentOption = "None",
+    MultipleOptions = false,
+    Flag = nil, -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Callback = function(Option)
+        print(Option[1])
+        Auto_Feed_Vars.Unit_To_Feed = Option[1]
+    end,
+})
+
+local Update_List_butt = Feeding_Tab:CreateButton({
+   Name = "Update List",
+   Callback = function()
+        Update_Units_In_Inventory()
    end,
 })
 
@@ -467,18 +538,73 @@ local Feed_First_Slot_Char_Togg = Feeding_Tab:CreateToggle({
 
     end,
 })
+local Divider = Feeding_Tab:CreateDivider()
 
--- local Required_Exp_Label = Feeding_Tab:CreateLabel("EXP: 0", 4483362458, Color3.fromRGB(255, 255, 225), false) -- Title, Icon, Color, IgnoreTheme
+local Feed_Fodder_togg  = Feeding_Tab:CreateToggle({
+    Name = 'Feed [FODDERS]',
+    CurrentValue = false,
+    Flag = "feed_fodders",
+    Callback = function(Value)
+
+    end,
+})
+
+local Feed_Common_togg  = Feeding_Tab:CreateToggle({
+    Name = 'Feed [COMMONS]',
+    CurrentValue = false,
+    Flag = "feed_commons",
+    Callback = function(Value)
+
+    end,
+})
+
+local Feed_Uncommon_togg = Feeding_Tab:CreateToggle({
+    Name = 'Feed [UNCOMMONS]',
+    CurrentValue = false,
+    Flag = "feed_uncommons",
+    Callback = function(Value)
+
+    end,
+})
+
+local Feed_Uncommon_togg = Feeding_Tab:CreateToggle({
+    Name = 'Feed [RARES]',
+    CurrentValue = false,
+    Flag = "feed_rares",
+    Callback = function(Value)
+
+    end,
+})
+
+local Divider = Feeding_Tab:CreateDivider()
+
+local Required_Exp_Label = Feeding_Tab:CreateLabel("EXP: 0", 4483362458, Color3.fromRGB(0, 0, 0), false) -- Title, Icon, Color, IgnoreTheme
 
 local Level_To_Reach_Input = Feeding_Tab:CreateInput({
-   Name = "Level To Reach",
-   CurrentValue = "0",
-   PlaceholderText = "0",
-   RemoveTextAfterFocusLost = false,
-   Flag = "Level_To_Feed_To",
-   Callback = function(Text)
+    Name = "Level To Reach",
+    CurrentValue = "0",
+    PlaceholderText = "0",
+    RemoveTextAfterFocusLost = false,
+    Flag = "Level_To_Feed_To_Reach",
+    Callback = function(Text)
+        
+    end,
+})
+
+local feed_button = Feeding_Tab:CreateButton({
+   Name = "Feed",
+   Callback = function()
 
    end,
+})
+
+local Auto_Feed_Toggle = Feeding_Tab:CreateToggle({
+    Name = 'Auto Feed',
+    CurrentValue = false,
+    Flag = nil,
+    Callback = function(Value)
+
+    end,
 })
 
 -- // GOJO'S CHILD ADDED //
@@ -494,6 +620,10 @@ GLOBALS.FX.ChildAdded:Connect(function(adopted)
     if VECAF_Func then 
         VECAF_Func(adopted)
     end
+end)
+
+GLOBALS.INVENTORY.ChildAdded:Connect(function() 
+    Update_Units_In_Inventory()
 end)
 
 local Auto_Farm_Runtime = {
