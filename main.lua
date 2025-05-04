@@ -221,8 +221,9 @@ function Find_New_Feed_Targets()
                     end
                 end
                 Auto_Feed_Vars.Feed_Target_List = Feedable_Units
+                return Required_Exp, Total_Exp
             end
-            return Required_Exp, Total_Exp
+            
 end
 
 local function Update_Units_In_Inventory()
@@ -554,6 +555,8 @@ local Test_Volume_Button = Gatcha_Tab:CreateButton({
 
 local Feeding_Tab = Window:CreateTab('Feed', 4483362458) -- Title, Image
 
+local Required_Exp_Label;
+local Available_Exp_Label; 
 -- MOVE -- MOVEMENT  --
 local Section = Feeding_Tab:CreateSection('Feeding')
 local Divider = Feeding_Tab:CreateDivider()
@@ -565,7 +568,13 @@ Available_Characters_dropdown = Feeding_Tab:CreateDropdown({
     MultipleOptions = false,
     Flag = nil, -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
     Callback = function(Option)
+        print(Option[1])
         Auto_Feed_Vars.Unit_To_Feed = Option[1]
+        local req_exp, total_exp = Find_New_Feed_Targets()
+                if req_exp and total_exp then 
+                    Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+                Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
+                end
     end,
 })
 
@@ -582,6 +591,12 @@ local Feed_First_Slot_Char_Togg = Feeding_Tab:CreateToggle({
     Flag = nil,
     Callback = function(Value)
         Auto_Feed_Vars.Feed_char_in_first_slot = Value
+
+         local req_exp, total_exp = Find_New_Feed_Targets()
+                if req_exp and total_exp then 
+                    Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+                Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
+                end
     end,
 })
 local Divider = Feeding_Tab:CreateDivider()
@@ -591,7 +606,12 @@ local Feed_Fodder_togg  = Feeding_Tab:CreateToggle({
     CurrentValue = false,
     Flag = "feed_fodders",
     Callback = function(Value)
-       Auto_Feed_Vars.Rarities_Allowed_To_Be_Fed["Fodder"] = Value
+         Auto_Feed_Vars.Rarities_Allowed_To_Be_Fed["Fodder"] = Value
+local req_exp, total_exp = Find_New_Feed_Targets()
+                if req_exp and total_exp then 
+                    Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+                Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
+                end
     end,
 })
 
@@ -600,7 +620,12 @@ local Feed_Common_togg  = Feeding_Tab:CreateToggle({
     CurrentValue = false,
     Flag = "feed_commons",
     Callback = function(Value)
-        Auto_Feed_Vars.Rarities_Allowed_To_Be_Fed["Common"] = Value
+     Auto_Feed_Vars.Rarities_Allowed_To_Be_Fed["Common"] = Value
+local req_exp, total_exp = Find_New_Feed_Targets()
+                if req_exp and total_exp then 
+                    Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+                Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
+                end
     end,
 })
 
@@ -610,6 +635,11 @@ local Feed_Uncommon_togg = Feeding_Tab:CreateToggle({
     Flag = "feed_uncommons",
     Callback = function(Value)
         Auto_Feed_Vars.Rarities_Allowed_To_Be_Fed["Uncommon"] = Value
+local req_exp, total_exp = Find_New_Feed_Targets()
+                if req_exp and total_exp then 
+                    Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+                Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
+                end
     end,
 })
 
@@ -619,13 +649,20 @@ local Feed_Uncommon_togg = Feeding_Tab:CreateToggle({
     Flag = "feed_rares",
     Callback = function(Value)
         Auto_Feed_Vars.Rarities_Allowed_To_Be_Fed["Rare"] = Value
+                    local req_exp, total_exp = Find_New_Feed_Targets()
+                if req_exp and total_exp then 
+                    Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+                Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
+                end
     end,
 })
 
 local Divider = Feeding_Tab:CreateDivider()
 
-local Required_Exp_Label = Feeding_Tab:CreateLabel("EXP: 0", 4483362458, Color3.fromRGB(0, 0, 0), false) -- Title, Icon, Color, IgnoreTheme
-local Available_Exp_Label = Feeding_Tab:CreateLabel("EXP Available: 0", 4483362458, Color3.fromRGB(0, 0, 0), false) -- Title, Icon, Color, IgnoreTheme
+Required_Exp_Label = Feeding_Tab:CreateLabel("EXP: 0", 4483362458, Color3.fromRGB(0, 0, 0), false) -- Title, Icon, Color, IgnoreTheme
+Available_Exp_Label = Feeding_Tab:CreateLabel("EXP Available: 0", 4483362458, Color3.fromRGB(0, 0, 0), false) -- Title, Icon, Color, IgnoreTheme
+
+local Divider = Feeding_Tab:CreateDivider()
 
 local Level_To_Reach_Input = Feeding_Tab:CreateInput({
     Name = "Level To Reach",
@@ -638,7 +675,11 @@ local Level_To_Reach_Input = Feeding_Tab:CreateInput({
             if not succ then warn(result) return end
             Auto_Feed_Vars.Level_To_Reach = result
         
-            Find_New_Feed_Targets()
+local req_exp, total_exp = Find_New_Feed_Targets()
+                if req_exp and total_exp then 
+                    Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+                Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
+                end
     end,
 })
 
@@ -651,9 +692,11 @@ local feed_button = Feeding_Tab:CreateButton({
                     Feed(Auto_Feed_Vars.Feed_Target_List, Target_Key)
                     Auto_Feed_Vars.Feed_Target_List = {}
                 end
-                local req_exp, total_exp = Find_New_Feed_Targets()
-                Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+local req_exp, total_exp = Find_New_Feed_Targets()
+                if req_exp and total_exp then 
+                    Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
                 Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
+                end
             end
            
     end,
@@ -683,9 +726,6 @@ GLOBALS.FX.ChildAdded:Connect(function(adopted)
     end
 end)
 
-GLOBALS.INVENTORY.ChildAdded:Connect(function() 
-    Update_Units_In_Inventory()
-end)
 
 local Auto_Farm_Runtime = {
     ["NOJO"] = function() -- GOJO // NOJO // GOJO
@@ -987,18 +1027,17 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
             execution_time_300 = os.clock()
             Update_Units_In_Inventory()
             
-            Required_Exp_Label:Set(`EXP: {math.floor(Required_Exp)}`)
-            Available_Exp_Label:Set(`EXP Available: {math.floor(Total_Exp)}`)
-            
             if Auto_Feed_Vars.Enabled and GLOBALS.INVENTORY then
                 local Target_Key = Auto_Feed_Vars.Character_To_Feed
                 if Target_Key and Auto_Feed_Vars.Feed_Target_List then
                     Feed(Auto_Feed_Vars.Feed_Target_List, Target_Key)
                     Auto_Feed_Vars.Feed_Target_List = {}
                 end
-                local req_exp, total_exp = Find_New_Feed_Targets()
-                Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+local req_exp, total_exp = Find_New_Feed_Targets()
+                if req_exp and total_exp then 
+                    Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
                 Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
+                end
             end
         end
 
