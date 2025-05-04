@@ -22,11 +22,8 @@ if not RNR_ENVIRONMENT then
     }
     RNR_ENVIRONMENT = getgenv().Anime_Mainia_Rayfield
 else
-    RNR_ENVIRONMENT.RUNTIME._running_ = false
-    print('cooking previous one')
-    task.wait(1)
-    print('cooked')
-    RNR_ENVIRONMENT.RUNTIME._running_ = true
+    warn("Already loaded an instance, to load a new one press the 'Kill Logic' Keybind. [DEFAULT: 'L'] ")
+    return
 end
 local RUNTIME = RNR_ENVIRONMENT.RUNTIME
 
@@ -52,8 +49,8 @@ local GLOBALS = {
     PLAYER_JUST_DIED = false,
     MAX_SLOTS = SERVICES.Players.LocalPlayer.Data.Slots,
     SOUNDS = SERVICES.Replicated.Assets.Sounds,
+    FEEDCHARACTER = SERVICES.Replicated.Remotes.FeedCharacter,
 }
-
 local this_player = {
     Player = SERVICES.Players.LocalPlayer,
     Character = SERVICES.Players.LocalPlayer.Character,
@@ -163,7 +160,10 @@ local Auto_Feed_Vars = {
     Units_To_Feed = {},
     Every_Unit_In_Inventory = {},
     Feedables = {},
+    safes = {},
+    Feed_Target_List = {},
     Unit_To_Feed = "",
+    Character_To_Feed = nil,
     Feed_char_in_first_slot = false,
     Rarities_Allowed_To_Be_Fed = {
         ["Fodder"] = false,
@@ -179,8 +179,50 @@ local Available_Characters_dropdown;
 
 -- // UTILITARIAN FUNCTIONALITIES
 
-local function Feed(Args)
-    print("feed_")
+function Feed(Feedables, Key)
+    GLOBALS.FEEDCHARACTER:InvokeServer(Feedables, Key)
+end
+
+function Find_New_Feed_Targets()
+            if Auto_Feed_Vars.Feed_char_in_first_slot then 
+                for _,Unit in Auto_Feed_Vars.Units_To_Feed do 
+                    if Unit.Equipped then
+                        Auto_Feed_Vars.Character_To_Feed = Unit
+                        break
+                    end
+                end 
+            else
+                for _,Unit in Auto_Feed_Vars.Units_To_Feed do 
+                    if Unit.Name == Auto_Feed_Vars.Unit_To_Feed and Unit.Level < Auto_Feed_Vars.Level_To_Reach then
+                        Auto_Feed_Vars.Character_To_Feed = Unit
+                        break
+                    end
+                end 
+            end
+
+            if Auto_Feed_Vars.Character_To_Feed then 
+                local Lvl_Goal = Auto_Feed_Vars.Level_To_Reach
+                local Curr_Lvl = Auto_Feed_Vars.Character_To_Feed.Level
+                    
+                local goal_m_one = (Lvl_Goal - 1)
+                local n = (goal_m_one - Curr_Lvl) + 1 
+                local xp = (Curr_Lvl * 5) + (goal_m_one * 5)
+                local Required_Exp = math.abs((xp * n) / 2)
+
+                local Total_Exp = 0
+                local Feedable_Units = {}
+                
+                for _, feedable in Auto_Feed_Vars.Feedables do
+                    if Auto_Feed_Vars.Rarities_Allowed_To_Be_Fed[feedable.Rarity] then
+                        local exp_value = (feedable.Level or 1) * (Rarity_To_Multi[feedable.Rarity] or 0) * 2
+                        Total_Exp += exp_value
+                        Feedable_Units[#Feedable_Units + 1] = feedable.Key
+                        if Total_Exp >= Required_Exp then break end
+                    end
+                end
+                Auto_Feed_Vars.Feed_Target_List = Feedable_Units
+            end
+            return Required_Exp, Total_Exp
 end
 
 local function Update_Units_In_Inventory()
@@ -216,17 +258,13 @@ local function Update_Units_In_Inventory()
         for _, Unit in Auto_Feed_Vars.Every_Unit_In_Inventory do 
             if Auto_Feed_Vars.Rarities_Allowed_To_Be_Fed[Unit.Rarity] ~= nil and not Unit.Favorited then 
                 Auto_Feed_Vars.Feedables[Unit.Key] = Unit
-                print(Unit.Level, Unit.Rarity)
             end
         end
-        local Dropdown_Safe_Units_To_Feed = {}
         for _,Unit in Auto_Feed_Vars.Units_To_Feed do 
-            if not table.find(Dropdown_Safe_Units_To_Feed, Unit.Name) then 
-                table.insert(Dropdown_Safe_Units_To_Feed, Unit.Name)
+            if not table.find(Auto_Feed_Vars.safes, Unit.Name) then 
+                table.insert(Auto_Feed_Vars.safes, Unit.Name)
             end
         end
-        
-        Available_Characters_dropdown:Refresh(Dropdown_Safe_Units_To_Feed)
     end
 end
 
@@ -527,15 +565,14 @@ Available_Characters_dropdown = Feeding_Tab:CreateDropdown({
     MultipleOptions = false,
     Flag = nil, -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
     Callback = function(Option)
-        print(Option[1])
         Auto_Feed_Vars.Unit_To_Feed = Option[1]
     end,
 })
 
 local Update_List_butt = Feeding_Tab:CreateButton({
-   Name = "Update List",
+   Name = "Refresh",
    Callback = function()
-        Update_Units_In_Inventory()
+        Available_Characters_dropdown:Refresh(Auto_Feed_Vars.safes)
    end,
 })
 
@@ -588,85 +625,37 @@ local Feed_Uncommon_togg = Feeding_Tab:CreateToggle({
 local Divider = Feeding_Tab:CreateDivider()
 
 local Required_Exp_Label = Feeding_Tab:CreateLabel("EXP: 0", 4483362458, Color3.fromRGB(0, 0, 0), false) -- Title, Icon, Color, IgnoreTheme
+local Available_Exp_Label = Feeding_Tab:CreateLabel("EXP Available: 0", 4483362458, Color3.fromRGB(0, 0, 0), false) -- Title, Icon, Color, IgnoreTheme
 
 local Level_To_Reach_Input = Feeding_Tab:CreateInput({
     Name = "Level To Reach",
     CurrentValue = "0",
     PlaceholderText = "0",
     RemoveTextAfterFocusLost = false,
-    Flag = "Level_To_Feed_To_Reach",
+    Flag = nil,
     Callback = function(Text)
-        local succ, result = pcall(tonumber, Text)
-        if not succ then warn(result) return end
-        Auto_Feed_Vars.Level_To_Reach = result
+            local succ, result = pcall(tonumber, Text)
+            if not succ then warn(result) return end
+            Auto_Feed_Vars.Level_To_Reach = result
         
-        local Selected_Character;
-            for _,Unit in Auto_Feed_Vars.Units_To_Feed do 
-                if Unit.Equipped then 
-                    Selected_Character = Unit
-                    break
-                end
-            end
-            if Selected_Character then 
-            local Lvl_Goal = Auto_Feed_Vars.Level_To_Reach -- 100
-            local Curr_Lvl = Selected_Character.Level -- 1
-                
-            local goal_m_one = (Lvl_Goal - 1) -- 99
-            local n = (goal_m_one - Curr_Lvl) + 1 
-            local xp = (Curr_Lvl * 5) + (goal_m_one * 5)
-            local Required_Exp = (xp * n) / 2
-
-            Required_Exp_Label:Set(`EXP: {Required_Exp}`)
-            end
+            Find_New_Feed_Targets()
     end,
 })
 
 local feed_button = Feeding_Tab:CreateButton({
     Name = "Feed",
     Callback = function()
-        if Auto_Feed_Vars.Feed_char_in_first_slot then
-            local Selected_Character;
-            for _,Unit in Auto_Feed_Vars.Units_To_Feed do 
-                if Unit.Equipped then 
-                    Selected_Character = Unit
-                    break
+            if Auto_Feed_Vars.Enabled and GLOBALS.INVENTORY then
+                local Target_Key = Auto_Feed_Vars.Character_To_Feed
+                if Target_Key and Auto_Feed_Vars.Feed_Target_List then
+                    Feed(Auto_Feed_Vars.Feed_Target_List, Target_Key)
+                    Auto_Feed_Vars.Feed_Target_List = {}
                 end
+                local req_exp, total_exp = Find_New_Feed_Targets()
+                Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+                Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
             end
-            if Selected_Character then 
-                local Lvl_Goal = Auto_Feed_Vars.Level_To_Reach -- 100
-                local Curr_Lvl = Selected_Character.Level -- 1
-                
-                local goal_m_one = (Lvl_Goal - 1) -- 99
-                local n = (goal_m_one - Curr_Lvl) + 1 
-                local xp = (Curr_Lvl * 5) + (goal_m_one * 5)
-                local Required_Exp = (xp * n) / 2
-
-                local Total_Exp = 0
-
-                local Feedable_Units = {}
-                for _,feedable in Auto_Feed_Vars.Feedables do 
-                    local Exp_From_Feedable = feedable.Level * Rarity_To_Multi[feedable.Rarity] * 2
-
-                    Feedable_Units[feedable.Key] = true
-                    Total_Exp += Exp_From_Feedable
-
-                    if Total_Exp > Required_Exp then
-                        break
-                    end
-                end
-
-                print(Required_Exp)
-                print(Total_Exp)
-
-                if #Feedable_Units > 0 then 
-                    local Arguments = {
-                        Feedable_Units,
-                        Selected_Character.Key
-                    }
-                    Feed(Arguments)
-                end
-            end
-        end
+           
     end,
 })
 
@@ -675,7 +664,7 @@ local Auto_Feed_Toggle = Feeding_Tab:CreateToggle({
     CurrentValue = false,
     Flag = nil,
     Callback = function(Value)
-
+        Auto_Feed_Vars.Enabled = Value
     end,
 })
 
@@ -734,7 +723,6 @@ local Auto_Farm_Runtime = {
             else
                 if Can_Fire_Remote then
                     if (GOJO[4].Wait_For_Next == false and not Player_Is_Stunned) and GOJO[4].Available_Evolved_Move ~= 3 then 
-                        print("offset chant")
                         GOJO.Offset_CFrame = CFrame.new(0,50,0)
                         local args = {
                             [1] = {
@@ -777,7 +765,6 @@ local Auto_Farm_Runtime = {
             if not GLOBALS.PLAYER_JUST_DIED then
                 if Can_Fire_Remote and GOJO[4].Available_Evolved_Move >= 2 then
                     if (not GOJO[2].Wait_For_Next and not Player_Is_Stunned) and (os.clock() - GOJO[2].Last_Attack_Delay_Time) > GOJO[2].Attack_Delay then 
-                        print("offset blue")
                         GOJO.Offset_CFrame = CFrame.new(0,50,0)
                         local args = {
                             [1] = {
@@ -817,7 +804,6 @@ local Auto_Farm_Runtime = {
             if not GLOBALS.PLAYER_JUST_DIED then 
                 if Can_Fire_Remote and not GOJO[1].Wait_For_Next and GOJO[4].Available_Evolved_Move >= 1 then 
                     GOJO.Offset_CFrame = CFrame.new(0,0,30)
-                    print("SHOULD BE ON COOLDOWN AND HALT THE THREAD")
                     local args = {
                         [1] = {
                             [1] = "Skill",
@@ -859,7 +845,6 @@ local Auto_Farm_Runtime = {
         if (not Hollow_Purple_On_CD and (Lapse_Blue_On_CD or Hollow_Purple_On_CD) and Auto_Farm_Vars.Enabled and Active_Target and not GOJO.Thread_Yielded) then 
             if not GLOBALS.PLAYER_JUST_DIED then 
                 if Can_Fire_Remote and not GOJO[3].Wait_For_Next and GOJO[4].Available_Evolved_Move <= 2 then 
-                    print(GOJO.Thread_Yielded)
                     GOJO.Offset_CFrame = CFrame.new(0,50,0)
                     local args = {
                         [1] = {
@@ -985,15 +970,38 @@ local function Gamble()
 end
 
 -- run
+local execution_time_300 = 0
+
+
 RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
     function(__delta__)
         if RUNTIME._running_ == false then
             this_player.Humanoid.WalkSpeed = 16
             RUNTIME._running_connection_:Disconnect()
             Rayfield:Destroy()
+            getgenv().Anime_Mainia_Rayfield = nil
             return
         end
         
+        if (os.clock() - execution_time_300) > 0.3 then 
+            execution_time_300 = os.clock()
+            Update_Units_In_Inventory()
+            
+            Required_Exp_Label:Set(`EXP: {math.floor(Required_Exp)}`)
+            Available_Exp_Label:Set(`EXP Available: {math.floor(Total_Exp)}`)
+            
+            if Auto_Feed_Vars.Enabled and GLOBALS.INVENTORY then
+                local Target_Key = Auto_Feed_Vars.Character_To_Feed
+                if Target_Key and Auto_Feed_Vars.Feed_Target_List then
+                    Feed(Auto_Feed_Vars.Feed_Target_List, Target_Key)
+                    Auto_Feed_Vars.Feed_Target_List = {}
+                end
+                local req_exp, total_exp = Find_New_Feed_Targets()
+                Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+                Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
+            end
+        end
+
         update_target()
         Update_Used_Slots()
         Gamble()
@@ -1026,6 +1034,7 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
 
 Rayfield:LoadConfiguration()
 Update_Units_In_Inventory()
+Available_Characters_dropdown:Refresh(Auto_Feed_Vars.safes)
 
 local already_queued = false
 this_player.Player.OnTeleport:Connect(function(State)
