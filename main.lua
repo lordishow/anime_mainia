@@ -216,7 +216,7 @@ function Find_New_Feed_Targets()
                     if Auto_Feed_Vars.Rarities_Allowed_To_Be_Fed[feedable.Rarity] then
                         local exp_value = (feedable.Level or 1) * (Rarity_To_Multi[feedable.Rarity] or 0) * 2
                         Total_Exp += exp_value
-                        Feedable_Units[#Feedable_Units + 1] = feedable.Key
+                        Feedable_Units[feedable.Key] = true
                         if Total_Exp >= Required_Exp then break end
                     end
                 end
@@ -572,7 +572,7 @@ Available_Characters_dropdown = Feeding_Tab:CreateDropdown({
         Auto_Feed_Vars.Unit_To_Feed = Option[1]
         local req_exp, total_exp = Find_New_Feed_Targets()
                 if req_exp and total_exp then 
-                    Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+                    Required_Exp_Label:Set(`EXP Required: {math.floor(req_exp)}`)
                 Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
                 end
     end,
@@ -594,7 +594,7 @@ local Feed_First_Slot_Char_Togg = Feeding_Tab:CreateToggle({
 
          local req_exp, total_exp = Find_New_Feed_Targets()
                 if req_exp and total_exp then 
-                    Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+                    Required_Exp_Label:Set(`EXP Required: {math.floor(req_exp)}`)
                 Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
                 end
     end,
@@ -609,7 +609,7 @@ local Feed_Fodder_togg  = Feeding_Tab:CreateToggle({
          Auto_Feed_Vars.Rarities_Allowed_To_Be_Fed["Fodder"] = Value
 local req_exp, total_exp = Find_New_Feed_Targets()
                 if req_exp and total_exp then 
-                    Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+                    Required_Exp_Label:Set(`EXP Required: {math.floor(req_exp)}`)
                 Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
                 end
     end,
@@ -623,7 +623,7 @@ local Feed_Common_togg  = Feeding_Tab:CreateToggle({
      Auto_Feed_Vars.Rarities_Allowed_To_Be_Fed["Common"] = Value
 local req_exp, total_exp = Find_New_Feed_Targets()
                 if req_exp and total_exp then 
-                    Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+                    Required_Exp_Label:Set(`EXP Required: {math.floor(req_exp)}`)
                 Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
                 end
     end,
@@ -637,7 +637,7 @@ local Feed_Uncommon_togg = Feeding_Tab:CreateToggle({
         Auto_Feed_Vars.Rarities_Allowed_To_Be_Fed["Uncommon"] = Value
 local req_exp, total_exp = Find_New_Feed_Targets()
                 if req_exp and total_exp then 
-                    Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+                    Required_Exp_Label:Set(`EXP Required: {math.floor(req_exp)}`)
                 Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
                 end
     end,
@@ -651,7 +651,7 @@ local Feed_Uncommon_togg = Feeding_Tab:CreateToggle({
         Auto_Feed_Vars.Rarities_Allowed_To_Be_Fed["Rare"] = Value
                     local req_exp, total_exp = Find_New_Feed_Targets()
                 if req_exp and total_exp then 
-                    Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+                    Required_Exp_Label:Set(`EXP Required: {math.floor(req_exp)}`)
                 Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
                 end
     end,
@@ -659,7 +659,7 @@ local Feed_Uncommon_togg = Feeding_Tab:CreateToggle({
 
 local Divider = Feeding_Tab:CreateDivider()
 
-Required_Exp_Label = Feeding_Tab:CreateLabel("EXP: 0", 4483362458, Color3.fromRGB(0, 0, 0), false) -- Title, Icon, Color, IgnoreTheme
+Required_Exp_Label = Feeding_Tab:CreateLabel("EXP Required: 0", 4483362458, Color3.fromRGB(0, 0, 0), false) -- Title, Icon, Color, IgnoreTheme
 Available_Exp_Label = Feeding_Tab:CreateLabel("EXP Available: 0", 4483362458, Color3.fromRGB(0, 0, 0), false) -- Title, Icon, Color, IgnoreTheme
 
 local Divider = Feeding_Tab:CreateDivider()
@@ -677,7 +677,7 @@ local Level_To_Reach_Input = Feeding_Tab:CreateInput({
         
 local req_exp, total_exp = Find_New_Feed_Targets()
                 if req_exp and total_exp then 
-                    Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+                    Required_Exp_Label:Set(`EXP Required: {math.floor(req_exp)}`)
                 Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
                 end
     end,
@@ -686,15 +686,16 @@ local req_exp, total_exp = Find_New_Feed_Targets()
 local feed_button = Feeding_Tab:CreateButton({
     Name = "Feed",
     Callback = function()
-            if Auto_Feed_Vars.Enabled and GLOBALS.INVENTORY then
+            if GLOBALS.INVENTORY then
                 local Target_Key = Auto_Feed_Vars.Character_To_Feed
+
                 if Target_Key and Auto_Feed_Vars.Feed_Target_List then
-                    Feed(Auto_Feed_Vars.Feed_Target_List, Target_Key)
+                    Feed(Auto_Feed_Vars.Feed_Target_List, Target_Key.Key)
                     Auto_Feed_Vars.Feed_Target_List = {}
                 end
 local req_exp, total_exp = Find_New_Feed_Targets()
                 if req_exp and total_exp then 
-                    Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+                    Required_Exp_Label:Set(`EXP Required: {math.floor(req_exp)}`)
                 Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
                 end
             end
@@ -985,7 +986,11 @@ local function Gamble()
         if Gatcha_Vars.Rolling_For == "GOLD" then 
             Gatcha_Vars.Rolling = true
             GLOBALS.ROLLX10:InvokeServer(true)
-
+            local req_exp, total_exp = Find_New_Feed_Targets()
+                if req_exp and total_exp then 
+                    Required_Exp_Label:Set(`EXP Required: {math.floor(req_exp)}`)
+                Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
+                end
             
             task.delay(0.6, function() 
                 Gatcha_Vars.Rolling = false
@@ -993,7 +998,12 @@ local function Gamble()
         elseif Gatcha_Vars.Rolling_For == "GEMS" then 
             Gatcha_Vars.Rolling = true
             GLOBALS.ROLLX10:InvokeServer()
-            
+            local req_exp, total_exp = Find_New_Feed_Targets()
+                if req_exp and total_exp then 
+                    Required_Exp_Label:Set(`EXP Required: {math.floor(req_exp)}`)
+                Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
+                end
+
             task.delay(0.6, function() 
                 Gatcha_Vars.Rolling = false
             end)
@@ -1010,7 +1020,7 @@ local function Gamble()
 end
 
 -- run
-local execution_time_300 = 0
+local execution_time_400 = 0
 
 
 RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
@@ -1023,19 +1033,19 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
             return
         end
         
-        if (os.clock() - execution_time_300) > 0.3 then 
+        if (os.clock() - execution_time_400) > 0.4 then 
             execution_time_300 = os.clock()
             Update_Units_In_Inventory()
             
             if Auto_Feed_Vars.Enabled and GLOBALS.INVENTORY then
                 local Target_Key = Auto_Feed_Vars.Character_To_Feed
                 if Target_Key and Auto_Feed_Vars.Feed_Target_List then
-                    Feed(Auto_Feed_Vars.Feed_Target_List, Target_Key)
+                    Feed(Auto_Feed_Vars.Feed_Target_List, Target_Key.Key)
                     Auto_Feed_Vars.Feed_Target_List = {}
                 end
 local req_exp, total_exp = Find_New_Feed_Targets()
                 if req_exp and total_exp then 
-                    Required_Exp_Label:Set(`EXP: {math.floor(req_exp)}`)
+                    Required_Exp_Label:Set(`EXP Required: {math.floor(req_exp)}`)
                 Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
                 end
             end
