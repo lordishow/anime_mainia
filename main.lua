@@ -11,7 +11,6 @@ loadstring(
         'https://raw.githubusercontent.com/lordishow/anime_mainia_bypass/refs/heads/main/bypass.lua'
     )
 )()
-
 getgenv().Anime_Mainia_Rayfield = nil
 local RNR_ENVIRONMENT = getgenv().Anime_Mainia_Rayfield
 if not RNR_ENVIRONMENT then
@@ -141,6 +140,7 @@ local Gatcha_Vars = {
     Rolling_For = "", -- GOLD, GEMS (token is for nerds)
     Notify_On_Full_Inv = false,
     Used_Slots = 0,
+    Volume = 1.5,
 }
 
 -- // UTILITARIAN FUNCTIONALITIES
@@ -361,8 +361,8 @@ local Auto_Farm_Bind = AutoFarm_Tab:CreateKeybind({
 local Gatcha_Tab = Window:CreateTab('Gatcha', 4483362458) -- Title, Image
 
 -- MOVE -- MOVEMENT  --
-local Section = AutoFarm_Tab:CreateSection('Rolling')
-local Divider = AutoFarm_Tab:CreateDivider()
+local Section = Gatcha_Tab:CreateSection('Rolling')
+local Divider = Gatcha_Tab:CreateDivider()
 
 local Roll_Gold_Banner;
 local Roll_Gems_Banner;
@@ -404,6 +404,26 @@ local Notify_On_Full_Inv_Togg = Gatcha_Tab:CreateToggle({
     end,
 })
 
+local Divider = Gatcha_Tab:CreateDivider()
+
+local Error_Volume_Slider = Gatcha_Tab:CreateSlider({
+    Name = 'Full Inv Alert Volume',
+    Range = { 0, 10 },
+    Increment = 0.1,
+    Suffix = 'Volume',
+    CurrentValue = 1.5,
+    Flag = 'Full_Inv_Sound_Volume', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Callback = function(Value)
+        Gatcha_Vars.Volume = Value
+    end,
+})
+
+local Test_Volume_Button = Gatcha_Tab:CreateButton({
+   Name = "Test Volume",
+   Callback = function()
+        Alert_User_Of_Max_Inv()
+   end,
+})
 -- // GOJO'S CHILD ADDED //
 
 local Visual_Effect_Child_Added_Functions = {
@@ -649,10 +669,29 @@ local function Update_Used_Slots()
                 and char.Name ~= "UIPadding" then 
                 
                 curr_slot_count += 1
+                --local decoded = SERVICES.Http:JSONDecode(GLOBALS.JSON_INVENTORY.Value)
+                --print(decoded[char.Key.Value].Exp)
             end
         end
         Gatcha_Vars.Used_Slots = curr_slot_count
     end
+end
+
+function Alert_User_Of_Max_Inv()
+    local Disposal = {}
+    for i = 1,75 do 
+        local Error_sound = GLOBALS.SOUNDS.Error:Clone()
+        Error_sound.Parent = SERVICES.Replicated
+        Error_sound.Volume = Gatcha_Vars.Volume 
+        Error_sound:Play()
+        table.insert(Disposal, Error_sound)
+        task.wait(0.01)
+    end
+    task.delay(2, function() 
+        for _,sound in Disposal do 
+            sound:Destroy()
+        end
+    end)
 end
 
 -- gambling
@@ -668,21 +707,7 @@ local function Gamble()
                 Roll_Gold_Banner:Set(false)
                 Roll_Gold_Banner:Set(false)
                 Gatcha_Vars.Rolling_For = ""
-
-                local Disposal = {}
-                for i = 1,75 do 
-                    local Error_sound = GLOBALS.SOUNDS.Error:Clone()
-                    Error_sound.Parent = SERVICES.Replicated
-                    Error_sound.Volume = 2.2
-                    Error_sound:Play()
-                    table.insert(Disposal, Error_sound)
-                    task.wait(0.01)
-                end
-                task.delay(2, function() 
-                    for _,sound in Disposal do 
-                        sound:Destroy()
-                    end
-                end)
+                Alert_User_Of_Max_Inv()
             end
         end
     end
