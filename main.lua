@@ -207,7 +207,7 @@ function Find_New_Feed_Targets()
                 local goal_m_one = (Lvl_Goal - 1)
                 local n = (goal_m_one - Curr_Lvl) + 1 
                 local xp = (Curr_Lvl * 5) + (goal_m_one * 5)
-                local Required_Exp = math.abs((xp * n) / 2)
+                local Required_Exp = (xp * n) / 2
 
                 local Total_Exp = 0
                 local Feedable_Units = {}
@@ -228,7 +228,6 @@ end
 
 local function Update_Units_In_Inventory()
     if GLOBALS.INVENTORY then 
-        print("activated: UPDATE UNITS IN INVENTYORY")
         table.clear(Auto_Feed_Vars.Units_To_Feed)
         table.clear(Auto_Feed_Vars.Every_Unit_In_Inventory)
         table.clear(Auto_Feed_Vars.Feedables)
@@ -672,11 +671,14 @@ local Level_To_Reach_Input = Feeding_Tab:CreateInput({
     RemoveTextAfterFocusLost = false,
     Flag = nil,
     Callback = function(Text)
-            local succ, result = pcall(tonumber, Text)
-            if not succ then warn(result) return end
-            Auto_Feed_Vars.Level_To_Reach = result
+            local succ, result = pcall(function() 
+                return tonumber(Text)
+            end)
+            if result then 
+                Auto_Feed_Vars.Level_To_Reach = result
+            end
         
-local req_exp, total_exp = Find_New_Feed_Targets()
+                local req_exp, total_exp = Find_New_Feed_Targets()
                 if req_exp and total_exp then 
                     Required_Exp_Label:Set(`EXP Required: {math.floor(req_exp)}`)
                 Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
