@@ -49,8 +49,10 @@ local GLOBALS = {
     STATUS = SERVICES.Players.LocalPlayer.Status,
     ROLLX10 = SERVICES.Replicated.Remotes.Rollx10,
     INVENTORY = SERVICES.Players.LocalPlayer.PlayerGui.CharacterSelection:FindFirstChild("InventoryNew") and SERVICES.Players.LocalPlayer.PlayerGui.CharacterSelection.InventoryNew.Inventory.Inventory or nil,
+    JSON_INVENTORY = SERVICES.Players.LocalPlayer.Data.Inventory,
     PLAYER_JUST_DIED = false,
     MAX_SLOTS = SERVICES.Players.LocalPlayer.Data.Slots,
+    SOUNDS = SERVICES.Replicated.Assets.Sounds,
 }
 
 local this_player = {
@@ -73,6 +75,7 @@ this_player.Player.CharacterAdded:Connect(function(new_character)
     GLOBALS.PLAYER_JUST_DIED = true
     GLOBALS.STATUS = SERVICES.Players.LocalPlayer.Status
     GLOBALS.MAX_SLOTS = SERVICES.Players.LocalPlayer.Data.Slots
+    GLOBALS.JSON_INVENTORY = SERVICES.Players.LocalPlayer.Data.Inventory
     task.delay(1.5, function() 
         GLOBALS.PLAYER_JUST_DIED = false
     end)
@@ -637,29 +640,50 @@ local Auto_Farm_Runtime = {
 
 local function Update_Used_Slots()
     if GLOBALS.INVENTORY then 
-        local curr_slot_count = 0
+        local curr_slot_count = -1
+
         for _,char in GLOBALS.INVENTORY:GetChildren() do 
-            if char:FindFirstChild("Key") and char.Name ~= "Template" then 
+            if char:FindFirstChild("Key") 
+                and char.Name ~= "Template" 
+                and char.Name ~= "UIGridLayout"
+                and char.Name ~= "UIPadding" then 
+                
                 curr_slot_count += 1
             end
         end
         Gatcha_Vars.Used_Slots = curr_slot_count
-        print(curr_slot_count)
     end
 end
 
 -- gambling
 local function Gamble()
     if GLOBALS.INVENTORY then 
-        print("passed cch")
-        print(Gatcha_Vars.Rolling_For)
         if Gatcha_Vars.Rolling_For == "GOLD" then 
             GLOBALS.ROLLX10:InvokeServer(true)
         elseif Gatcha_Vars.Rolling_For == "GEMS" then 
             GLOBALS.ROLLX10:InvokeServer()
         end
-        if Gatcha_Vars.Notify_On_Full_Inv then 
-            -- print("AYO YOU STINK")
+        if Gatcha_Vars.Notify_On_Full_Inv and Gatcha_Vars.Rolling_For ~= "" then 
+            if GLOBALS.MAX_SLOTS.Value - Gatcha_Vars.Used_Slots <= 10 then 
+                Roll_Gold_Banner:Set(false)
+                Roll_Gold_Banner:Set(false)
+                Gatcha_Vars.Rolling_For = ""
+
+                local Disposal = {}
+                for i = 1,75 do 
+                    local Error_sound = GLOBALS.SOUNDS.Error:Clone()
+                    Error_sound.Parent = SERVICES.Replicated
+                    Error_sound.Volume = 2.2
+                    Error_sound:Play()
+                    table.insert(Disposal, Error_sound)
+                    task.wait(0.01)
+                end
+                task.delay(2, function() 
+                    for _,sound in Disposal do 
+                        sound:Destroy()
+                    end
+                end)
+            end
         end
     end
 end
