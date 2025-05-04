@@ -50,6 +50,7 @@ local GLOBALS = {
     ROLLX10 = SERVICES.Replicated.Remotes.Rollx10,
     INVENTORY = SERVICES.Players.LocalPlayer.PlayerGui.CharacterSelection:FindFirstChild("InventoryNew") and SERVICES.Players.LocalPlayer.PlayerGui.CharacterSelection.InventoryNew.Inventory.Inventory or nil,
     PLAYER_JUST_DIED = false,
+    MAX_SLOTS = SERVICES.Players.LocalPlayer.Data.Slots,
 }
 
 local this_player = {
@@ -71,6 +72,7 @@ this_player.Player.CharacterAdded:Connect(function(new_character)
     this_player.Ban = new_character:WaitForChild('Ban')
     GLOBALS.PLAYER_JUST_DIED = true
     GLOBALS.STATUS = SERVICES.Players.LocalPlayer.Status
+    GLOBALS.MAX_SLOTS = SERVICES.Players.LocalPlayer.Data.Slots
     task.delay(1.5, function() 
         GLOBALS.PLAYER_JUST_DIED = false
     end)
@@ -135,6 +137,7 @@ local Last_Time_Input_Was_Fired = 0
 local Gatcha_Vars = {
     Rolling_For = "", -- GOLD, GEMS (token is for nerds)
     Notify_On_Full_Inv = false,
+    Used_Slots = 0,
 }
 
 -- // UTILITARIAN FUNCTIONALITIES
@@ -632,6 +635,19 @@ local Auto_Farm_Runtime = {
     end,
 }
 
+local function Update_Used_Slots()
+    if GLOBALS.INVENTORY then 
+        local curr_slot_count = 0
+        for _,char in GLOBALS.INVENTORY:GetChildren() do 
+            if char:FindFirstChild("Key") and char.Name ~= "Template" then 
+                curr_slot_count += 1
+            end
+        end
+        Gatcha_Vars.Used_Slots = curr_slot_count
+        print(curr_slot_count)
+    end
+end
+
 -- gambling
 local function Gamble()
     if GLOBALS.INVENTORY then 
@@ -659,7 +675,7 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
         end
         
         update_target()
-        
+        Update_Used_Slots()
         Gamble()
 
         task.spawn(function() -- CUSTOM MOVEMENT LOGIC
