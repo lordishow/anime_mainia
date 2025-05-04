@@ -228,6 +228,7 @@ end
 
 local function Update_Units_In_Inventory()
     if GLOBALS.INVENTORY then 
+        print("activated: UPDATE UNITS IN INVENTYORY")
         table.clear(Auto_Feed_Vars.Units_To_Feed)
         table.clear(Auto_Feed_Vars.Every_Unit_In_Inventory)
         table.clear(Auto_Feed_Vars.Feedables)
@@ -1034,7 +1035,8 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
         end
         
         if (os.clock() - execution_time_400) > 0.4 then 
-            execution_time_300 = os.clock()
+            execution_time_400 = os.clock()
+
             Update_Units_In_Inventory()
             
             if Auto_Feed_Vars.Enabled and GLOBALS.INVENTORY then
