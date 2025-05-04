@@ -31,8 +31,6 @@ else
 end
 local RUNTIME = RNR_ENVIRONMENT.RUNTIME
 
-
-
 local SERVICES = {
     Replicated = game:GetService('ReplicatedStorage'),
     UserInput = game:GetService('UserInputService'),
@@ -49,6 +47,8 @@ local GLOBALS = {
     TARGET = nil,
     INPUT = SERVICES.Replicated.Remotes.Input,
     STATUS = SERVICES.Players.LocalPlayer.Status,
+    ROLLX10 = SERVICES.Replicated.Remotes.Rollx10,
+    INVENTORY = SERVICES.Players.LocalPlayer.PlayerGui.CharacterSelection:FindFirstChild("InventoryNew") and SERVICES.Players.LocalPlayer.PlayerGui.CharacterSelection.InventoryNew.Inventory.Inventory or nil,
     PLAYER_JUST_DIED = false,
 }
 
@@ -92,8 +92,6 @@ local Char_Presets = {
             Attack_Delay = 0,
             Wait_For_Next = false,
             Lapse_Blue_Spinning_Part = nil,
-            Elapsed_time_since_new_part = 0,
-            Elapsed_time_since_last_remote_fired = 0
         },
         [3] = {
             Wait_For_Next = false,
@@ -131,6 +129,13 @@ local Black_List = {}
 -- // INPUT REMOTE // INPUT REMOTE //
 
 local Last_Time_Input_Was_Fired = 0
+
+-- // GAMBLING VARIABLES 🥵🥵🥵🥵
+
+local Gatcha_Vars = {
+    Rolling_For = "", -- GOLD, GEMS (token is for nerds)
+    Notify_On_Full_Inv = false,
+}
 
 -- // UTILITARIAN FUNCTIONALITIES
 
@@ -245,7 +250,7 @@ local Movement_Speed_Slider = Movement_Tab:CreateSlider({
 local Custom_Speed_Toggle = Movement_Tab:CreateToggle({
     Name = 'Custom Speed Toggled',
     CurrentValue = false,
-    Flag = 'custom_speed_togg',
+    Flag = nil,
     Callback = function(Value)
         Custom_Movement.toggled = Value
         if Value == false then
@@ -301,7 +306,7 @@ local Divider = AutoFarm_Tab:CreateDivider()
 local Auto_Farm_Enabled_Toggle = AutoFarm_Tab:CreateToggle({
     Name = 'Auto Farm',
     CurrentValue = false,
-    Flag = 'Auto_Farm_Toggle',
+    Flag = nil,
     Callback = function(Value)
        Auto_Farm_Vars.Enabled = Value
     end,
@@ -343,16 +348,61 @@ local Auto_Farm_Bind = AutoFarm_Tab:CreateKeybind({
     end,
 })
 
+-- [[ GATCHA TAB ]] -- -- [[ GATCHA TAB ]] -- -- [[ GATCHA TAB ]] -- -- [[ GATCHA TAB ]] -- -- [[ GATCHA TAB ]] --
+
+-- [[ GATCHA TAB ]] -- -- [[ GATCHA TAB ]] -- -- [[ GATCHA TAB ]] -- -- [[ GATCHA TAB ]] -- -- [[ FARM TAB ]] --
+
+local Gatcha_Tab = Window:CreateTab('Gatcha', 4483362458) -- Title, Image
+
+-- MOVE -- MOVEMENT  --
+local Section = AutoFarm_Tab:CreateSection('Rolling')
+local Divider = AutoFarm_Tab:CreateDivider()
+
+local Roll_Gold_Banner;
+local Roll_Gems_Banner;
+
+Roll_Gold_Banner = Gatcha_Tab:CreateToggle({
+    Name = 'Roll x10 Gold',
+    CurrentValue = false,
+    Flag = nil,
+    Callback = function(Value)
+        if Value == true then
+            Roll_Gems_Banner:Set(false)
+            Gatcha_Vars.Rolling_For = "GOLD"
+        else
+            Gatcha_Vars.Rolling_For = ""
+        end
+    end,
+})
+
+Roll_Gems_Banner = Gatcha_Tab:CreateToggle({
+    Name = 'Roll x10 Gems',
+    CurrentValue = false,
+    Flag = nil,
+    Callback = function(Value)
+        if Value == true then 
+            Roll_Gold_Banner:Set(false)
+            Gatcha_Vars.Rolling_For = "GEMS"
+        else
+            Gatcha_Vars.Rolling_For = ""
+        end
+    end,
+})
+
+local Notify_On_Full_Inv_Togg = Gatcha_Tab:CreateToggle({
+    Name = 'Notify When Inventory Is Full',
+    CurrentValue = false,
+    Flag = "Notify_When_Inventory_Full",
+    Callback = function(Value)
+        Gatcha_Vars.Notify_On_Full_Inv = Value
+    end,
+})
 
 -- // GOJO'S CHILD ADDED //
 
 local Visual_Effect_Child_Added_Functions = {
     ["NOJO"] = function(adopted) 
-        if adopted.Name == "LapseBlue" then
-            local GOJO = Char_Presets["NOJO"] 
-            GOJO[2].Lapse_Blue_Spinning_Part = adopted
-            GOJO[2].Elapsed_time_since_new_part = os.clock()
-        end
+        -- legacy code
     end
 }
 
@@ -582,6 +632,22 @@ local Auto_Farm_Runtime = {
     end,
 }
 
+-- gambling
+local function Gamble()
+    if GLOBALS.INVENTORY then 
+        print("passed cch")
+        print(Gatcha_Vars.Rolling_For)
+        if Gatcha_Vars.Rolling_For == "GOLD" then 
+            GLOBALS.ROLLX10:InvokeServer(true)
+        elseif Gatcha_Vars.Rolling_For == "GEMS" then 
+            GLOBALS.ROLLX10:InvokeServer()
+        end
+        if Gatcha_Vars.Notify_On_Full_Inv then 
+            -- print("AYO YOU STINK")
+        end
+    end
+end
+
 -- run
 RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
     function(__delta__)
@@ -593,6 +659,8 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
         end
         
         update_target()
+        
+        Gamble()
 
         task.spawn(function() -- CUSTOM MOVEMENT LOGIC
             if Custom_Movement.toggled then
@@ -618,6 +686,7 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
         end) 
     end
 )
+
 
 Rayfield:LoadConfiguration()
 
