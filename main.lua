@@ -301,7 +301,7 @@ local function update_target()
             if not SERVICES.Players:GetPlayerFromCharacter(NPC_Model) then
                 local _root = NPC_Model:FindFirstChild("HumanoidRootPart")
                 local _humanoid = NPC_Model:FindFirstChildOfClass("Humanoid")
-                if _root and _humanoid.Health > 0 then
+                if _root and _humanoid and _humanoid.Health > 0 then
                     local _distance = (_root.Position - this_player.HumanoidRootPart.Position).Magnitude
                     if not Best_Quality_Target or (_distance < Best_Distance) then
                         Best_Quality_Target = NPC_Model
@@ -935,8 +935,9 @@ local Auto_Farm_Runtime = {
                     GOJO.Thread_Yielded = true
                     for i = 1, 10 do 
                         GOJO.Thread_Yielded = true
-                        _override_offset = true
+                        
                         GOJO.Offset_CFrame = CFrame.new(0,0,30)
+                        _override_offset = true
                         task.wait(0.1)
                     end
                     task.wait(1)
@@ -999,15 +1000,18 @@ local Auto_Farm_Runtime = {
         if GLOBALS.TARGET == nil or GLOBALS.TARGET:FindFirstChild("HumanoidRootPart") == nil then 
             Active_Target = false
         end
-        if _override_offset == false then 
+        if _override_offset == false and not GOJO.Thread_Yielded then 
+                    local elapsed_time = tick() - start_time
                         local x = math.cos(elapsed_time * (2 * Orbit_Vars.Orbit_Speed)) * (25 * Orbit_Vars.Orbit_Radius)
                         local y = math.sin(elapsed_time * (5 * Orbit_Vars.Orbit_Speed)) * (25 * Orbit_Vars.Orbit_Radius)
-
-                        ROGER.Offset_CFrame = CFrame.new(
+                        if Active_Target then 
+                        GOJO.Offset_CFrame = CFrame.new(
                             x,
                             Orbit_Vars.Height,
                             y
                         )
+                        end
+                        
         end
         if Active_Target then 
             local offsetCFrame = GLOBALS.TARGET.HumanoidRootPart.CFrame * GOJO.Offset_CFrame
@@ -1037,12 +1041,12 @@ local Auto_Farm_Runtime = {
         local Rapture_On_CD = this_player.Cooldowns:FindFirstChild("Rapture") and true or false -- rupture
         local Haoshoku_On_CD = this_player.Cooldowns:FindFirstChild("Haoshoku") and true or false
 
-        local elapsed_time = tick() - start_time
-
+       
+        local _override_offset = false
         local Player_Is_Stunned = GLOBALS.STATUS:FindFirstChild("Stunned") and true or false
 
             if not GLOBALS.PLAYER_JUST_DIED then
-                local _override_offset = false
+                
 
 
                 if not Player_Is_Stunned and Active_Target then
@@ -1087,7 +1091,8 @@ local Auto_Farm_Runtime = {
                             end
                         end
                     end
-                    if _override_offset == false then 
+                    if _override_offset == false then
+                        local elapsed_time = tick() - start_time
                         local x = math.cos(elapsed_time * (2 * Orbit_Vars.Orbit_Speed)) * (25 * Orbit_Vars.Orbit_Radius)
                         local y = math.sin(elapsed_time * (5 * Orbit_Vars.Orbit_Speed)) * (25 * Orbit_Vars.Orbit_Radius)
 
