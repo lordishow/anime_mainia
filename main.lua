@@ -1080,12 +1080,12 @@ local Auto_Farm_Runtime = {
                         end
                     end
                     if _override_offset == false then 
-                        local x = math.cos(elapsed_time * (2 * Orbit_Vars.Orbit_Speed)) * (25 * Orbit_Radius)
-                        local y = math.sin(elapsed_time * (5 * Orbit_Vars.Orbit_Speed)) * (25 * Orbit_Radius)
+                        local x = math.cos(elapsed_time * (2 * Orbit_Vars.Orbit_Speed)) * (25 * Orbit_Vars.Orbit_Radius)
+                        local y = math.sin(elapsed_time * (5 * Orbit_Vars.Orbit_Speed)) * (25 * Orbit_Vars.Orbit_Radius)
 
                         ROGER.Offset_CFrame = CFrame.new(
                             x,
-                            Height,
+                            Orbit_Vars.Height,
                             y
                         )
                     end
