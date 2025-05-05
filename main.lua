@@ -819,6 +819,7 @@ local Auto_Farm_Runtime = {
         local Player_Is_Stunned = GLOBALS.STATUS:FindFirstChild("Stunned") and true or false
 
         local Can_Fire_Remote = ((os.clock() - Last_Time_Input_Was_Fired) > 0.1)
+        local _override_offset = false
 
         if not Chanting_On_CD and Auto_Farm_Vars.Enabled and Active_Target and not GOJO.Thread_Yielded then
             if GLOBALS.PLAYER_JUST_DIED then
@@ -827,7 +828,6 @@ local Auto_Farm_Runtime = {
             else
                 if Can_Fire_Remote then
                     if (GOJO[4].Wait_For_Next == false and not Player_Is_Stunned) and GOJO[4].Available_Evolved_Move ~= 3 then 
-                        GOJO.Offset_CFrame = CFrame.new(0,50,0)
                         local args = {
                             [1] = {
                                 [1] = "Skill",
@@ -869,7 +869,6 @@ local Auto_Farm_Runtime = {
             if not GLOBALS.PLAYER_JUST_DIED then
                 if Can_Fire_Remote and GOJO[4].Available_Evolved_Move >= 2 then
                     if (not GOJO[2].Wait_For_Next and not Player_Is_Stunned) and (os.clock() - GOJO[2].Last_Attack_Delay_Time) > GOJO[2].Attack_Delay then 
-                        GOJO.Offset_CFrame = CFrame.new(0,50,0)
                         local args = {
                             [1] = {
                                 [1] = "Skill",
@@ -907,6 +906,7 @@ local Auto_Farm_Runtime = {
         if not Reversal_Red_On_CD and (Lapse_Blue_On_CD or Hollow_Purple_On_CD) and  Auto_Farm_Vars.Enabled and Active_Target and not GOJO.Thread_Yielded then 
             if not GLOBALS.PLAYER_JUST_DIED then 
                 if Can_Fire_Remote and not GOJO[1].Wait_For_Next and GOJO[4].Available_Evolved_Move >= 1 then 
+                    _override_offset = true
                     GOJO.Offset_CFrame = CFrame.new(0,0,30)
                     local args = {
                         [1] = {
@@ -935,6 +935,7 @@ local Auto_Farm_Runtime = {
                     GOJO.Thread_Yielded = true
                     for i = 1, 10 do 
                         GOJO.Thread_Yielded = true
+                        _override_offset = true
                         GOJO.Offset_CFrame = CFrame.new(0,0,30)
                         task.wait(0.1)
                     end
@@ -949,7 +950,6 @@ local Auto_Farm_Runtime = {
         if (not Hollow_Purple_On_CD and (Lapse_Blue_On_CD or Hollow_Purple_On_CD) and Auto_Farm_Vars.Enabled and Active_Target and not GOJO.Thread_Yielded) then 
             if not GLOBALS.PLAYER_JUST_DIED then 
                 if Can_Fire_Remote and not GOJO[3].Wait_For_Next and GOJO[4].Available_Evolved_Move <= 2 then 
-                    GOJO.Offset_CFrame = CFrame.new(0,50,0)
                     local args = {
                         [1] = {
                             [1] = "Skill",
@@ -998,6 +998,16 @@ local Auto_Farm_Runtime = {
         -- doing again cuz delayes (speaking form expirience)
         if GLOBALS.TARGET == nil or GLOBALS.TARGET:FindFirstChild("HumanoidRootPart") == nil then 
             Active_Target = false
+        end
+        if _override_offset == false then 
+                        local x = math.cos(elapsed_time * (2 * Orbit_Vars.Orbit_Speed)) * (25 * Orbit_Vars.Orbit_Radius)
+                        local y = math.sin(elapsed_time * (5 * Orbit_Vars.Orbit_Speed)) * (25 * Orbit_Vars.Orbit_Radius)
+
+                        ROGER.Offset_CFrame = CFrame.new(
+                            x,
+                            Orbit_Vars.Height,
+                            y
+                        )
         end
         if Active_Target then 
             local offsetCFrame = GLOBALS.TARGET.HumanoidRootPart.CFrame * GOJO.Offset_CFrame
