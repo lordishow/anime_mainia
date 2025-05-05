@@ -125,7 +125,7 @@ local Char_Presets = {
 
 -- // GENERAL VARIABLES // GENERAL STORE //
 local Keep_On_Teleport = false
-
+local start_time = tick()
 local Zero_Velocity = false
 
 --|| MOVEMENT LOGIC VARIABLES // -- // LOGIC MOVEMENT VARIABLES //
@@ -138,6 +138,14 @@ local Custom_Movement = {
 local Auto_Farm_Vars = {
     Enabled = false,
     Preset = "NOJO"
+}
+
+-- // ORBIT VARS // GOOFY AHH VARS
+
+local Orbit_Vars = {
+    Height = 50,
+    Orbit_Radius = 1,
+    Orbit_Speed = 1,
 }
 
 -- // FINDING TARGET VARIABLES // TARGET SPY //
@@ -285,34 +293,32 @@ local function Update_Units_In_Inventory()
     end
 end
 
+local Best_Quality_Target = nil
+local Best_Distance = nil
+
 local function update_target()
-    if not GLOBALS.TARGET then
-        local Best_Quality_Target = nil
-        local Best_Humanoid = nil
         for _, NPC_Model in GLOBALS.LIVING:GetChildren() do
-            if Black_List[NPC_Model] then continue end
             if not SERVICES.Players:GetPlayerFromCharacter(NPC_Model) then
+                local _root = NPC_Model:FindFirstChild("HumanoidRootPart")
                 local _humanoid = NPC_Model:FindFirstChildOfClass("Humanoid")
-                if _humanoid and _humanoid.Health > 0 then
-                    if not Best_Quality_Target or (_humanoid.Health < Best_Humanoid.Health) then
+                if _root and _humanoid.Health > 0 then
+                    local _distance = (_root.Position - this_player.HumanoidRootPart.Position).Magnitude
+                    print(_distance)
+                    print(Best_Distance)
+                    if not Best_Quality_Target or (_distance < Best_Distance) then
                         Best_Quality_Target = NPC_Model
-                        Best_Humanoid = _humanoid
+                        Best_Distance = _distance
+                    else
+                        local _bq_root = Best_Quality_Target:FindFirstChild("HumanoidRootPart")
+                        if _bq_root then 
+                            Best_Distance = (_bq_root.Position - this_player.HumanoidRootPart.Position).Magnitude
+                        end
+                       
                     end
                 end
             end
         end
         GLOBALS.TARGET = Best_Quality_Target
-    else
-        local should_blacklist_target = false
-        local _humanoid = GLOBALS.TARGET:FindFirstChildOfClass("Humanoid")
-        if not _humanoid or _humanoid.Health <= 0 then
-            should_blacklist_target = true
-        end
-        if should_blacklist_target then
-            Black_List[GLOBALS.TARGET] = true
-            GLOBALS.TARGET = nil
-        end
-    end
 end
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
@@ -468,6 +474,46 @@ local Char_Preset_Dropdown = AutoFarm_Tab:CreateDropdown({
         Auto_Farm_Vars.Preset = Option[1]
    end,
 })
+
+local Divider = AutoFarm_Tab:CreateDivider()
+local Section = AutoFarm_Tab:CreateSection('Orbit')
+
+local Orbit_Height_Slider = AutoFarm_Tab:CreateSlider({
+    Name = 'Orbit Height',
+    Range = { 0, 100 },
+    Increment = 1,
+    Suffix = 'Delay',
+    CurrentValue = 50,
+    Flag = 'Height', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Callback = function(Value)
+        Orbit_Vars.Height = Value
+    end,
+})
+
+local Orbit_Speed_Slider = AutoFarm_Tab:CreateSlider({
+    Name = 'Orbit Speed',
+    Range = { 0, 5 },
+    Increment = 0.1,
+    Suffix = 'Delay',
+    CurrentValue = 1,
+    Flag = 'Speed', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Callback = function(Value)
+        Orbit_Vars.Orbit_Speed = Value
+    end,
+})
+
+local Orbit_Radius_Slider = AutoFarm_Tab:CreateSlider({
+    Name = 'Orbit Radius',
+    Range = { 0, 5 },
+    Increment = 0.1,
+    Suffix = 'Distance',
+    CurrentValue = 1,
+    Flag = 'Orbit Radius', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Callback = function(Value)
+        Orbit_Vars.Orbit_Radius = Value
+    end,
+})
+
 
 local Divider = AutoFarm_Tab:CreateDivider()
 local Section = AutoFarm_Tab:CreateSection('NOJO')
@@ -749,8 +795,8 @@ end)
 
 local Auto_Farm_Runtime = {
     ["NOJO"] = function() -- GOJO // NOJO // GOJO
-        if game:GetService("ReplicatedStorage"):FindFirstChild("Effect_Mods") and game:GetService("ReplicatedStorage"):FindFirstChild("Effect_Mods")["Honored One"] then 
-            game:GetService("ReplicatedStorage").Effect_Mods["Honored One"].Parent:Destroy()
+        if game:GetService("ReplicatedStorage"):FindFirstChild("Effect_Mods") then 
+            game:GetService("ReplicatedStorage"):FindFirstChild("Effect_Mods"):Destroy()
         end
 
         local GOJO = Char_Presets["NOJO"]
@@ -969,23 +1015,30 @@ local Auto_Farm_Runtime = {
         ]]
     end,
     ["ROGER"] = function() 
+        if game:GetService("ReplicatedStorage"):FindFirstChild("Effect_Mods") then 
+            game:GetService("ReplicatedStorage"):FindFirstChild("Effect_Mods"):Destroy()
+        end
+
         local ROGER = Char_Presets["ROGER"]
         local Active_Target = true
         if GLOBALS.TARGET == nil or GLOBALS.TARGET:FindFirstChild("HumanoidRootPart") == nil then 
             Active_Target = false
         end
-        
         local Kamusari_On_CD = this_player.Cooldowns:FindFirstChild("Kamusari") and true or false -- slash
         local Crownbreaker_On_CD = this_player.Cooldowns:FindFirstChild("Crownbreaker") and true or false
         local Rapture_On_CD = this_player.Cooldowns:FindFirstChild("Rapture") and true or false -- rupture
         local Haoshoku_On_CD = this_player.Cooldowns:FindFirstChild("Haoshoku") and true or false
 
+        local elapsed_time = tick() - start_time
+
         local Player_Is_Stunned = GLOBALS.STATUS:FindFirstChild("Stunned") and true or false
 
             if not GLOBALS.PLAYER_JUST_DIED then
+                local _override_offset = false
+
+
                 if not Player_Is_Stunned and Active_Target then
                     if not Kamusari_On_CD  then 
-                            ROGER.Offset_CFrame = CFrame.new(0, 50, 0)
                             local args = {
                                 [1] = {
                                     [1] = "Skill",
@@ -1007,7 +1060,6 @@ local Auto_Farm_Runtime = {
                                 local _humanoid = NPC_Model:FindFirstChildOfClass("Humanoid")
                                 if _humanoid and _humanoid.Health > 0 then
                                     if Rog_Slash_Remote then
-                                        print(_)
                                         Rog_Slash_Remote:FireServer(NPC_Model, NPC_Model.HumanoidRootPart.CFrame)
                                     end
                                 end
@@ -1026,6 +1078,16 @@ local Auto_Farm_Runtime = {
                                 end
                             end
                         end
+                    end
+                    if _override_offset == false then 
+                        local x = math.cos(elapsed_time * (2 * Orbit_Vars.Orbit_Speed)) * (25 * Orbit_Radius)
+                        local y = math.sin(elapsed_time * (5 * Orbit_Vars.Orbit_Speed)) * (25 * Orbit_Radius)
+
+                        ROGER.Offset_CFrame = CFrame.new(
+                            x,
+                            Height,
+                            y
+                        )
                     end
                     local offsetCFrame = GLOBALS.TARGET.HumanoidRootPart.CFrame * ROGER.Offset_CFrame
 
