@@ -993,7 +993,6 @@ local Auto_Farm_Runtime = {
                                 }
                             }
                             GLOBALS.INPUT:FireServer(unpack(args))  
-                        end
                     end
                 end
 
