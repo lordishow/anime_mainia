@@ -303,8 +303,6 @@ local function update_target()
                 local _humanoid = NPC_Model:FindFirstChildOfClass("Humanoid")
                 if _root and _humanoid.Health > 0 then
                     local _distance = (_root.Position - this_player.HumanoidRootPart.Position).Magnitude
-                    print(_distance)
-                    print(Best_Distance)
                     if not Best_Quality_Target or (_distance < Best_Distance) then
                         Best_Quality_Target = NPC_Model
                         Best_Distance = _distance
@@ -482,9 +480,9 @@ local Orbit_Height_Slider = AutoFarm_Tab:CreateSlider({
     Name = 'Orbit Height',
     Range = { 0, 100 },
     Increment = 1,
-    Suffix = 'Delay',
+    Suffix = 'Height',
     CurrentValue = 50,
-    Flag = 'Height', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Flag = 'Orbit Height', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
     Callback = function(Value)
         Orbit_Vars.Height = Value
     end,
@@ -494,9 +492,9 @@ local Orbit_Speed_Slider = AutoFarm_Tab:CreateSlider({
     Name = 'Orbit Speed',
     Range = { 0, 5 },
     Increment = 0.1,
-    Suffix = 'Delay',
+    Suffix = 'Speed',
     CurrentValue = 1,
-    Flag = 'Speed', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Flag = 'Orbit Speed', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
     Callback = function(Value)
         Orbit_Vars.Orbit_Speed = Value
     end,
