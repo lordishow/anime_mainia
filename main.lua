@@ -50,6 +50,7 @@ local GLOBALS = {
     MAX_SLOTS = SERVICES.Players.LocalPlayer.Data.Slots,
     SOUNDS = SERVICES.Replicated.Assets.Sounds,
     FEEDCHARACTER = SERVICES.Replicated.Remotes.FeedCharacter,
+    HIDDEN_FOLDER = Instance.new("Folder"),
 }
 local this_player = {
     Player = SERVICES.Players.LocalPlayer,
@@ -107,6 +108,8 @@ local Char_Presets = {
     ["ROGER"] = {
         Offset_CFrame = CFrame.new(0,0,0),
         Thread_Yielded = false,
+        Move_Delay = 2,
+        Last_Time_Move_Used = 0,
         [1] = {
             Wait_For_Next = false,
         },
@@ -794,10 +797,6 @@ end)
 
 local Auto_Farm_Runtime = {
     ["NOJO"] = function() -- GOJO // NOJO // GOJO
-        if game:GetService("ReplicatedStorage"):FindFirstChild("Effect_Mods") then 
-            game:GetService("ReplicatedStorage"):FindFirstChild("Effect_Mods"):Destroy()
-        end
-
         local GOJO = Char_Presets["NOJO"]
 
         local Active_Target = true
@@ -1028,10 +1027,6 @@ local Auto_Farm_Runtime = {
         ]]
     end,
     ["ROGER"] = function() 
-        if game:GetService("ReplicatedStorage"):FindFirstChild("Effect_Mods") then 
-            game:GetService("ReplicatedStorage"):FindFirstChild("Effect_Mods"):Destroy()
-        end
-
         local ROGER = Char_Presets["ROGER"]
         local Active_Target = true
         if GLOBALS.TARGET == nil or GLOBALS.TARGET:FindFirstChild("HumanoidRootPart") == nil then 
@@ -1047,11 +1042,9 @@ local Auto_Farm_Runtime = {
         local Player_Is_Stunned = GLOBALS.STATUS:FindFirstChild("Stunned") and true or false
 
             if not GLOBALS.PLAYER_JUST_DIED then
-                
-
-
                 if not Player_Is_Stunned and Active_Target then
-                    if not Kamusari_On_CD  then 
+                    if not Kamusari_On_CD and (os.clock() - ROGER.Last_Time_Move_Used) > ROGER.Move_Delay  then 
+                            ROGER.Last_Time_Move_Used = os.clock()
                             local args = {
                                 [1] = {
                                     [1] = "Skill",
@@ -1065,7 +1058,8 @@ local Auto_Farm_Runtime = {
                 end
 
                 if not Player_Is_Stunned and Active_Target then
-                    if not Crownbreaker_On_CD  then 
+                    if not Crownbreaker_On_CD and (os.clock() - ROGER.Last_Time_Move_Used) > ROGER.Move_Delay then 
+                         ROGER.Last_Time_Move_Used = os.clock()
                         _override_offset = true
                             local args = {
                                 [1] = {
@@ -1085,6 +1079,21 @@ local Auto_Farm_Runtime = {
                         task.delay(0.5, function() 
                             ROGER.Thread_Yielded = false
                         end)
+                    end
+                end
+
+                if not Player_Is_Stunned and Active_Target then
+                    if not Rapture_On_CD and (os.clock() - ROGER.Last_Time_Move_Used) > ROGER.Move_Delay  then 
+                        ROGER.Last_Time_Move_Used = os.clock()
+                        local args = {
+                            [1] = {
+                                [1] = "Skill",
+                                [2] = "3"
+                            }
+                        }
+                        for i = 1,10 do 
+                            GLOBALS.INPUT:FireServer(unpack(args))
+                        end
                     end
                 end
                 -- PASSIVE
@@ -1262,9 +1271,16 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
 
         task.spawn(function() -- GOJO LAPSE BLUE 
             if Auto_Farm_Vars.Enabled then 
+                if GLOBALS.HIDDEN_FOLDER:FindFirstChild("Effect_Mods") then 
+                    GLOBALS.HIDDEN_FOLDER:FindFirstChild("Effect_Mods").Parent = SERVICES.Replicated
+                end
                 local auto_farm_func = Auto_Farm_Runtime[Auto_Farm_Vars.Preset]
                 if auto_farm_func then 
                     auto_farm_func()
+                end
+            else
+                if SERVICES.Replicated:FindFirstChild("Effect_Mods") then 
+                     SERVICES.Replicated:FindFirstChild("Effect_Mods").Parent = GLOBALS.HIDDEN_FOLDER
                 end
             end
         end) 
