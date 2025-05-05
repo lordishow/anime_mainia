@@ -983,40 +983,19 @@ local Auto_Farm_Runtime = {
         local Player_Is_Stunned = GLOBALS.STATUS:FindFirstChild("Stunned") and true or false
 
             if not GLOBALS.PLAYER_JUST_DIED then
-                if not Player_Is_Stunned and Active_Target then 
-                    print(ROGER[1].Wait_For_Next and "Waiting..." or "false")
-                    if not Kamusari_On_CD and not ROGER[1].Wait_For_Next then 
-                        ROGER.Offset_CFrame = CFrame.new(0, 50, 0)
-                        ROGER[1].Wait_For_Next = true
-                        print("Set to true")
-                        local args = {
-                            [1] = {
-                                [1] = "Skill",
-                                [2] = "1"
+                if not Player_Is_Stunned and Active_Target then
+                    if not Kamusari_On_CD  then 
+                            ROGER.Offset_CFrame = CFrame.new(0, 50, 0)
+                            local args = {
+                                [1] = {
+                                    [1] = "Skill",
+                                    [2] = "1"
+                                }
                             }
-                        }
-                        GLOBALS.INPUT:FireServer(unpack(args))
-                        
-                        Kamusari_On_CD = this_player.Cooldowns:WaitForChild("Kamusari", 2)
-                        if Kamusari_On_CD then 
-                            task.spawn(function() 
-                                if not Auto_Farm_Vars.Enabled then return end
-
-                                local max_index = 100
-                                local index = 0
-                                repeat
-                                    task.wait(0.1)
-                                until (this_player.Cooldowns:FindFirstChild("Kamusari") == nil) or GLOBALS.PLAYER_JUST_DIED or not Auto_Farm_Vars.Enabled or index > max_index
-                                ROGER[1].Wait_For_Next = false
-                            end)
-                        else
-                            print("setting to false")
-                            ROGER[1].Wait_For_Next = false
+                            GLOBALS.INPUT:FireServer(unpack(args))  
                         end
                     end
                 end
-
-
 
                 if Active_Target then 
                     local Rog_Slash_Remote = GLOBALS.FX:FindFirstChild("RogerSlashRemote")
