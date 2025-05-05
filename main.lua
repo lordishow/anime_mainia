@@ -72,7 +72,7 @@ this_player.Player.CharacterAdded:Connect(function(new_character)
     GLOBALS.STATUS = SERVICES.Players.LocalPlayer.Status
     GLOBALS.MAX_SLOTS = SERVICES.Players.LocalPlayer.Data.Slots
     GLOBALS.JSON_INVENTORY = SERVICES.Players.LocalPlayer.Data.Inventory
-    task.delay(0.5, function() 
+    task.delay(1, function() 
         GLOBALS.PLAYER_JUST_DIED = false
     end)
     Update_Units_In_Inventory()
@@ -982,9 +982,8 @@ local Auto_Farm_Runtime = {
 
         local Player_Is_Stunned = GLOBALS.STATUS:FindFirstChild("Stunned") and true or false
 
-        if Active_Target then 
             if not GLOBALS.PLAYER_JUST_DIED then
-                if not Player_Is_Stunned then 
+                if not Player_Is_Stunned and Active_Target then 
                     print(ROGER[1].Wait_For_Next and "Waiting..." or "false")
                     if not Kamusari_On_CD and not ROGER[1].Wait_For_Next then 
                         ROGER.Offset_CFrame = CFrame.new(0, 50, 0)
@@ -1054,8 +1053,6 @@ local Auto_Farm_Runtime = {
             else
                 ROGER[1].Wait_For_Next = false
             end
-        end
-
     end,
 }
 
