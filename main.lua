@@ -1004,7 +1004,7 @@ local Auto_Farm_Runtime = {
 
                                 local max_index = 100
                                 local index = 0
-                                repeat 
+                                repeat
                                     task.wait(0.1)
                                 until (this_player.Cooldowns:FindFirstChild("Kamusari") == nil) or GLOBALS.PLAYER_JUST_DIED or not Auto_Farm_Vars.Enabled or index > max_index
                                 ROGER[1].Wait_For_Next = false
@@ -1016,40 +1016,45 @@ local Auto_Farm_Runtime = {
                     end
                 end
 
-                local Rog_Slash_Remote = GLOBALS.FX:FindFirstChild("RogerSlashRemote")
-                local Rog_Fall_Remote = GLOBALS.FX:FindFirstChild("RogerFallRemote")
 
-                if Rog_Slash_Remote then
-                    for _, NPC_Model in GLOBALS.LIVING:GetChildren() do
-                        if Black_List[NPC_Model] then continue end
-                        if SERVICES.Players:GetPlayerFromCharacter(NPC_Model) == nil then
-                            local _humanoid = NPC_Model:FindFirstChildOfClass("Humanoid")
-                            if _humanoid and _humanoid.Health > 0 then
-                                if Rog_Slash_Remote then
-                                    print(_)
-                                    Rog_Slash_Remote:FireServer(NPC_Model, NPC_Model.HumanoidRootPart.CFrame)
+
+                if Active_Target then 
+                    local Rog_Slash_Remote = GLOBALS.FX:FindFirstChild("RogerSlashRemote")
+                    local Rog_Fall_Remote = GLOBALS.FX:FindFirstChild("RogerFallRemote")
+
+                    if Rog_Slash_Remote then
+                        for _, NPC_Model in GLOBALS.LIVING:GetChildren() do
+                            if Black_List[NPC_Model] then continue end
+                            if SERVICES.Players:GetPlayerFromCharacter(NPC_Model) == nil then
+                                local _humanoid = NPC_Model:FindFirstChildOfClass("Humanoid")
+                                if _humanoid and _humanoid.Health > 0 then
+                                    if Rog_Slash_Remote then
+                                        print(_)
+                                        Rog_Slash_Remote:FireServer(NPC_Model, NPC_Model.HumanoidRootPart.CFrame)
+                                    end
                                 end
                             end
                         end
                     end
-                end
-                if Rog_Fall_Remote then
-                    for _, NPC_Model in GLOBALS.LIVING:GetChildren() do
-                        if Black_List[NPC_Model] then continue end
-                        if SERVICES.Players:GetPlayerFromCharacter(NPC_Model) == nil then
-                            local _humanoid = NPC_Model:FindFirstChildOfClass("Humanoid")
-                            if _humanoid and _humanoid.Health > 0 then
-                                if Rog_Fall_Remote then
-                                    Rog_Fall_Remote:FireServer(GLOBALS.TARGET, this_player.HumanoidRootPart.CFrame)
+                    if Rog_Fall_Remote then
+                        for _, NPC_Model in GLOBALS.LIVING:GetChildren() do
+                            if Black_List[NPC_Model] then continue end
+                            if SERVICES.Players:GetPlayerFromCharacter(NPC_Model) == nil then
+                                local _humanoid = NPC_Model:FindFirstChildOfClass("Humanoid")
+                                if _humanoid and _humanoid.Health > 0 then
+                                    if Rog_Fall_Remote then
+                                        Rog_Fall_Remote:FireServer(GLOBALS.TARGET, this_player.HumanoidRootPart.CFrame)
+                                    end
                                 end
                             end
                         end
                     end
-                end
-                local offsetCFrame = GLOBALS.TARGET.HumanoidRootPart.CFrame * ROGER.Offset_CFrame
+                    local offsetCFrame = GLOBALS.TARGET.HumanoidRootPart.CFrame * ROGER.Offset_CFrame
 
-                this_player.HumanoidRootPart.CFrame = offsetCFrame
-                this_player.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
+                    this_player.HumanoidRootPart.CFrame = offsetCFrame
+                    this_player.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero 
+                end
+
             else
                 ROGER[1].Wait_For_Next = false
             end
