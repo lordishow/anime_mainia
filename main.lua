@@ -307,11 +307,12 @@ local function update_target()
                         Best_Quality_Target = NPC_Model
                         Best_Distance = _distance
                     else
-                        local _bq_root = Best_Quality_Target:FindFirstChild("HumanoidRootPart")
+                        local _bq_root = Best_Quality_Target and Best_Quality_Target:FindFirstChild("HumanoidRootPart")
                         if _bq_root then 
                             Best_Distance = (_bq_root.Position - this_player.HumanoidRootPart.Position).Magnitude
+                        else
+                            Best_Distance = math.huge 
                         end
-                       
                     end
                 end
             end
@@ -462,6 +463,16 @@ local Auto_Farm_Enabled_Toggle = AutoFarm_Tab:CreateToggle({
     end,
 })
 
+local Auto_Farm_Bind = AutoFarm_Tab:CreateKeybind({
+    Name = 'Auto Farm Keybind',
+    CurrentKeybind = 'G',
+    HoldToInteract = false,
+    Flag = 'Auto_Farm_Keybind', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Callback = function()
+        Auto_Farm_Enabled_Toggle:Set(not Auto_Farm_Vars.Enabled)
+    end,
+})
+
 local Char_Preset_Dropdown = AutoFarm_Tab:CreateDropdown({
    Name = "Character Preset",
    Options = {"NOJO", "ROGER"},
@@ -525,16 +536,6 @@ local Starting_Delay_Slider = AutoFarm_Tab:CreateSlider({
     Flag = 'Lapse_Blue_Cast_Delay', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
     Callback = function(Value)
         Char_Presets["NOJO"][2].Attack_Delay = Value
-    end,
-})
-
-local Auto_Farm_Bind = AutoFarm_Tab:CreateKeybind({
-    Name = 'Auto Farm Keybind',
-    CurrentKeybind = 'G',
-    HoldToInteract = false,
-    Flag = 'Auto_Farm_Keybind', -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-    Callback = function()
-        Auto_Farm_Enabled_Toggle:Set(not Auto_Farm_Vars.Enabled)
     end,
 })
 
@@ -1057,41 +1058,57 @@ local Auto_Farm_Runtime = {
                                     [2] = "1"
                                 }
                             }
-                            GLOBALS.INPUT:FireServer(unpack(args))  
+                            for i = 1,2 do 
+                                GLOBALS.INPUT:FireServer(unpack(args))
+                            end  
                     end
                 end
 
+                if not Player_Is_Stunned and Active_Target then
+                    if not Crownbreaker_On_CD  then 
+                        _override_offset = true
+                            local args = {
+                                [1] = {
+                                    [1] = "Skill",
+                                    [2] = "2"
+                                }
+                            }
+                        for i = 1,10 do 
+                            GLOBALS.INPUT:FireServer(unpack(args))
+                        end
+                       
+                        ROGER.Thread_Yielded = true
+                        for i = 1,7 do 
+                            task.wait(0.1)
+                             ROGER.Offset_CFrame = CFrame.new(0,0,30)
+                        end
+                        task.delay(0.5, function() 
+                            ROGER.Thread_Yielded = false
+                        end)
+                    end
+                end
+                -- PASSIVE
                 if Active_Target then 
-                    local Rog_Slash_Remote = GLOBALS.FX:FindFirstChild("RogerSlashRemote")
-                    local Rog_Fall_Remote = GLOBALS.FX:FindFirstChild("RogerFallRemote")
+                    local roger_remotes = {}
+                    for _,remote in  GLOBALS.FX:GetChildren() do 
+                        if remote:IsA("RemoteEvent") and remote.Name == "RogerSlashRemote" and roger_remotes[remote] ~= remote then 
+                            roger_remotes[remote] = remote
+                        end 
+                    end
+                    
+                        for _, NPC_Model in GLOBALS.LIVING:GetChildren() do
+                            if Black_List[NPC_Model] then continue end
+                            if SERVICES.Players:GetPlayerFromCharacter(NPC_Model) == nil then
+                                local _humanoid = NPC_Model:FindFirstChildOfClass("Humanoid")
+                                if _humanoid and _humanoid.Health > 0 then
+                                    for _,rog_sl_rem in roger_remotes do 
+                                        rog_sl_rem:FireServer(NPC_Model, NPC_Model.HumanoidRootPart.CFrame)
+                                    end
+                                end
+                            end
+                        end
 
-                    if Rog_Slash_Remote then
-                        for _, NPC_Model in GLOBALS.LIVING:GetChildren() do
-                            if Black_List[NPC_Model] then continue end
-                            if SERVICES.Players:GetPlayerFromCharacter(NPC_Model) == nil then
-                                local _humanoid = NPC_Model:FindFirstChildOfClass("Humanoid")
-                                if _humanoid and _humanoid.Health > 0 then
-                                    if Rog_Slash_Remote then
-                                        Rog_Slash_Remote:FireServer(NPC_Model, NPC_Model.HumanoidRootPart.CFrame)
-                                    end
-                                end
-                            end
-                        end
-                    end
-                    if Rog_Fall_Remote then
-                        for _, NPC_Model in GLOBALS.LIVING:GetChildren() do
-                            if Black_List[NPC_Model] then continue end
-                            if SERVICES.Players:GetPlayerFromCharacter(NPC_Model) == nil then
-                                local _humanoid = NPC_Model:FindFirstChildOfClass("Humanoid")
-                                if _humanoid and _humanoid.Health > 0 then
-                                    if Rog_Fall_Remote then
-                                        Rog_Fall_Remote:FireServer(GLOBALS.TARGET, this_player.HumanoidRootPart.CFrame)
-                                    end
-                                end
-                            end
-                        end
-                    end
-                    if _override_offset == false then
+                    if _override_offset == false and not ROGER.Thread_Yielded then
                         local elapsed_time = tick() - start_time
                         local x = math.cos(elapsed_time * (2 * Orbit_Vars.Orbit_Speed)) * (25 * Orbit_Vars.Orbit_Radius)
                         local y = math.sin(elapsed_time * (5 * Orbit_Vars.Orbit_Speed)) * (25 * Orbit_Vars.Orbit_Radius)
