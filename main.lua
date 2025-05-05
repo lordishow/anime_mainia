@@ -458,7 +458,7 @@ local Auto_Farm_Enabled_Toggle = AutoFarm_Tab:CreateToggle({
     end,
 })
 
-local Dropdown = AutoFarm_Tab:CreateDropdown({
+local Char_Preset_Dropdown = AutoFarm_Tab:CreateDropdown({
    Name = "Character Preset",
    Options = {"NOJO", "ROGER"},
    CurrentOption = "NOJO",
@@ -985,11 +985,11 @@ local Auto_Farm_Runtime = {
         if Active_Target then 
             if not GLOBALS.PLAYER_JUST_DIED then
                 if not Player_Is_Stunned then 
-                    print(Kamusari_On_CD)
-                    print(ROGER[1].Wait_For_Next)
+                    print(ROGER[1].Wait_For_Next and "Waiting..." or "false")
                     if not Kamusari_On_CD and not ROGER[1].Wait_For_Next then 
                         ROGER.Offset_CFrame = CFrame.new(0, 50, 0)
                         ROGER[1].Wait_For_Next = true
+                        print("Set to true")
                         local args = {
                             [1] = {
                                 [1] = "Skill",
@@ -1003,7 +1003,7 @@ local Auto_Farm_Runtime = {
                             task.spawn(function() 
                                 if not Auto_Farm_Vars.Enabled then return end
 
-                                local max_index = 10
+                                local max_index = 100
                                 local index = 0
                                 repeat 
                                     task.wait(0.1)
@@ -1011,6 +1011,7 @@ local Auto_Farm_Runtime = {
                                 ROGER[1].Wait_For_Next = false
                             end)
                         else
+                            print("setting to false")
                             ROGER[1].Wait_For_Next = false
                         end
                     end
@@ -1205,8 +1206,8 @@ Available_Characters_dropdown:Refresh(Auto_Feed_Vars.safes)
 
 local already_queued = false
 this_player.Player.OnTeleport:Connect(function(State)
-    if (State == Enum.TeleportState.Started or State == Enum.TeleportState.InProgress) and Keep_On_Teleport and already_queued == false then
-    already_queued = true
+    if (State == Enum.TeleportState.Started or State == Enum.TeleportState.InProgress) and Keep_On_Teleport and already_queued == false and RUNTIME._running_ == true then
+        already_queued = true
 		queue_on_teleport([[
 				loadstring(game:HttpGet('https://raw.githubusercontent.com/lordishow/anime_mainia/refs/heads/main/main.lua'))()
 		]])
