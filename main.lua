@@ -72,7 +72,7 @@ this_player.Player.CharacterAdded:Connect(function(new_character)
     GLOBALS.STATUS = SERVICES.Players.LocalPlayer.Status
     GLOBALS.MAX_SLOTS = SERVICES.Players.LocalPlayer.Data.Slots
     GLOBALS.JSON_INVENTORY = SERVICES.Players.LocalPlayer.Data.Inventory
-    task.delay(1.5, function() 
+    task.delay(0.5, function() 
         GLOBALS.PLAYER_JUST_DIED = false
     end)
     Update_Units_In_Inventory()
@@ -102,6 +102,22 @@ local Char_Presets = {
             Wait_For_Next = false,
             Available_Evolved_Move = 0,
             Last_Time_Chanted = 0,
+        }
+    },
+    ["ROGER"] = {
+        Offset_CFrame = CFrame.new(0,0,0),
+        Thread_Yielded = false,
+        [1] = {
+            Wait_For_Next = false,
+        },
+        [2] = {
+            Wait_For_Next = false,
+        },
+        [3] = {
+            Wait_For_Next = false,
+        },
+        [4] = {
+            Wait_For_Next = false,
         }
     }
 }
@@ -444,7 +460,7 @@ local Auto_Farm_Enabled_Toggle = AutoFarm_Tab:CreateToggle({
 
 local Dropdown = AutoFarm_Tab:CreateDropdown({
    Name = "Character Preset",
-   Options = {"NOJO"},
+   Options = {"NOJO", "ROGER"},
    CurrentOption = "NOJO",
    MultipleOptions = false,
    Flag = "Character_Preset_Table", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
@@ -753,8 +769,8 @@ local Auto_Farm_Runtime = {
 
         local Lapse_Blue_On_CD = this_player.Cooldowns:FindFirstChild("Lapse Blue") and true or false
         local Chanting_On_CD = this_player.Cooldowns:FindFirstChild("Chanting") and true or false
-        local Reversal_Red_On_CD = this_player.Cooldowns:FindFirstChild("Reversal Red")
-        local Hollow_Purple_On_CD = this_player.Cooldowns:FindFirstChild("Hollow Purple")
+        local Reversal_Red_On_CD = this_player.Cooldowns:FindFirstChild("Reversal Red") and true or false
+        local Hollow_Purple_On_CD = this_player.Cooldowns:FindFirstChild("Hollow Purple") and true or false
 
         local Player_Is_Stunned = GLOBALS.STATUS:FindFirstChild("Stunned") and true or false
 
@@ -921,12 +937,20 @@ local Auto_Farm_Runtime = {
 
         if Can_Fire_Remote and Active_Target then 
             local Position_REMOTE = GLOBALS.FX:FindFirstChild("RemoteEvent")
-            if Position_REMOTE then
-                if Can_Fire_Remote then 
-                    Position_REMOTE:FireServer(GLOBALS.TARGET.HumanoidRootPart.CFrame)
-                end 
-             end
+            for _, NPC_Model in GLOBALS.LIVING:GetChildren() do
+                if Black_List[NPC_Model] then continue end
+                if not SERVICES.Players:GetPlayerFromCharacter(NPC_Model) then
+                    local _humanoid = NPC_Model:FindFirstChildOfClass("Humanoid")
+                    if _humanoid and _humanoid.Health > 0 then
+                        if Position_REMOTE then
+                            Position_REMOTE:FireServer(NPC_Model:FindFirstChild("HumanoidRootPart").CFrame)
+                        end
+                    end
+                end
+            end
+            --Position_REMOTE:FireServer(GLOBALS.TARGET.HumanoidRootPart.CFrame)
         end
+        
         -- doing again cuz delayes (speaking form expirience)
         if GLOBALS.TARGET == nil or GLOBALS.TARGET:FindFirstChild("HumanoidRootPart") == nil then 
             Active_Target = false
@@ -943,6 +967,94 @@ local Auto_Farm_Runtime = {
         local desiredHRPPosition = GLOBALS.TARGET.HumanoidRootPart.Position - offset
         this_player.HumanoidRootPart.CFrame = CFrame.new(desiredHRPPosition)
         ]]
+    end,
+    ["ROGER"] = function() 
+        local ROGER = Char_Presets["ROGER"]
+        local Active_Target = true
+        if GLOBALS.TARGET == nil or GLOBALS.TARGET:FindFirstChild("HumanoidRootPart") == nil then 
+            Active_Target = false
+        end
+        
+        local Kamusari_On_CD = this_player.Cooldowns:FindFirstChild("Kamusari") and true or false -- slash
+        local Crownbreaker_On_CD = this_player.Cooldowns:FindFirstChild("Crownbreaker") and true or false
+        local Rapture_On_CD = this_player.Cooldowns:FindFirstChild("Rapture") and true or false -- rupture
+        local Haoshoku_On_CD = this_player.Cooldowns:FindFirstChild("Haoshoku") and true or false
+
+        local Player_Is_Stunned = GLOBALS.STATUS:FindFirstChild("Stunned") and true or false
+
+        if Active_Target then 
+            if not GLOBALS.PLAYER_JUST_DIED then
+                if not Player_Is_Stunned then 
+                    print(Kamusari_On_CD)
+                    print(ROGER[1].Wait_For_Next)
+                    if not Kamusari_On_CD and not ROGER[1].Wait_For_Next then 
+                        ROGER.Offset_CFrame = CFrame.new(0, 50, 0)
+                        ROGER[1].Wait_For_Next = true
+                        local args = {
+                            [1] = {
+                                [1] = "Skill",
+                                [2] = "1"
+                            }
+                        }
+                        GLOBALS.INPUT:FireServer(unpack(args))
+                        
+                        Kamusari_On_CD = this_player.Cooldowns:WaitForChild("Kamusari", 2)
+                        if Kamusari_On_CD then 
+                            task.spawn(function() 
+                                if not Auto_Farm_Vars.Enabled then return end
+
+                                local max_index = 10
+                                local index = 0
+                                repeat 
+                                    task.wait(0.1)
+                                until (this_player.Cooldowns:FindFirstChild("Kamusari") == nil) or GLOBALS.PLAYER_JUST_DIED or not Auto_Farm_Vars.Enabled or index > max_index
+                                ROGER[1].Wait_For_Next = false
+                            end)
+                        else
+                            ROGER[1].Wait_For_Next = false
+                        end
+                    end
+                end
+
+                local Rog_Slash_Remote = GLOBALS.FX:FindFirstChild("RogerSlashRemote")
+                local Rog_Fall_Remote = GLOBALS.FX:FindFirstChild("RogerFallRemote")
+
+                if Rog_Slash_Remote then
+                    for _, NPC_Model in GLOBALS.LIVING:GetChildren() do
+                        if Black_List[NPC_Model] then continue end
+                        if SERVICES.Players:GetPlayerFromCharacter(NPC_Model) == nil then
+                            local _humanoid = NPC_Model:FindFirstChildOfClass("Humanoid")
+                            if _humanoid and _humanoid.Health > 0 then
+                                if Rog_Slash_Remote then
+                                    print(_)
+                                    Rog_Slash_Remote:FireServer(NPC_Model, NPC_Model.HumanoidRootPart.CFrame)
+                                end
+                            end
+                        end
+                    end
+                end
+                if Rog_Fall_Remote then
+                    for _, NPC_Model in GLOBALS.LIVING:GetChildren() do
+                        if Black_List[NPC_Model] then continue end
+                        if SERVICES.Players:GetPlayerFromCharacter(NPC_Model) == nil then
+                            local _humanoid = NPC_Model:FindFirstChildOfClass("Humanoid")
+                            if _humanoid and _humanoid.Health > 0 then
+                                if Rog_Fall_Remote then
+                                    Rog_Fall_Remote:FireServer(GLOBALS.TARGET, this_player.HumanoidRootPart.CFrame)
+                                end
+                            end
+                        end
+                    end
+                end
+                local offsetCFrame = GLOBALS.TARGET.HumanoidRootPart.CFrame * ROGER.Offset_CFrame
+
+                this_player.HumanoidRootPart.CFrame = offsetCFrame
+                this_player.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
+            else
+                ROGER[1].Wait_For_Next = false
+            end
+        end
+
     end,
 }
 
@@ -1044,10 +1156,12 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
             if Auto_Feed_Vars.Enabled and GLOBALS.INVENTORY then
                 local Target_Key = Auto_Feed_Vars.Character_To_Feed
                 if Target_Key and Auto_Feed_Vars.Feed_Target_List then
-                    Feed(Auto_Feed_Vars.Feed_Target_List, Target_Key.Key)
-                    Auto_Feed_Vars.Feed_Target_List = {}
+                    if Character_To_Feed.Level < Auto_Feed_Vars.Level_To_Reach then
+                        Feed(Auto_Feed_Vars.Feed_Target_List, Target_Key.Key)
+                        Auto_Feed_Vars.Feed_Target_List = {}
+                    end
                 end
-local req_exp, total_exp = Find_New_Feed_Targets()
+                local req_exp, total_exp = Find_New_Feed_Targets()
                 if req_exp and total_exp then 
                     Required_Exp_Label:Set(`EXP Required: {math.floor(req_exp)}`)
                 Available_Exp_Label:Set(`EXP Available: {math.floor(total_exp)}`)
