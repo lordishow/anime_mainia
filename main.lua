@@ -1171,7 +1171,7 @@ RUNTIME._running_connection_ = SERVICES.Run.RenderStepped:Connect(
             if Auto_Feed_Vars.Enabled and GLOBALS.INVENTORY then
                 local Target_Key = Auto_Feed_Vars.Character_To_Feed
                 if Target_Key and Auto_Feed_Vars.Feed_Target_List then
-                    if Character_To_Feed.Level < Auto_Feed_Vars.Level_To_Reach then
+                    if Auto_Feed_Vars.Character_To_Feed.Level < Auto_Feed_Vars.Level_To_Reach then
                         Feed(Auto_Feed_Vars.Feed_Target_List, Target_Key.Key)
                         Auto_Feed_Vars.Feed_Target_List = {}
                     end
